@@ -441,7 +441,7 @@ from .muenchentv import MuenchenTVIE
 from .musicplayon import MusicPlayOnIE
 from .muzu import MuzuTVIE
 from .mwave import MwaveIE
-from .myspace import MySpaceIE, MySpaceAlbumIE
+from .myspace import MySpaceIE, MySpaceAlbumIE, MySpaceArtistSongsIE
 from .myspass import MySpassIE
 from .myvi import MyviIE
 from .myvideo import MyVideoIE
