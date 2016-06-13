@@ -14,11 +14,13 @@ from ..compat import (
     compat_urllib_parse_urlparse,
 )
 from ..utils import (
+    determine_ext,
     ExtractorError,
     float_or_none,
     int_or_none,
     sanitized_Request,
     unsmuggle_url,
+    update_url_query,
     xpath_with_ns,
     mimetype2ext,
     find_xpath_attr,
@@ -48,6 +50,12 @@ class ThePlatformBaseIE(OnceIE):
             if OnceIE.suitable(_format['url']):
                 formats.extend(self._extract_once_formats(_format['url']))
             else:
+                media_url = _format['url']
+                if determine_ext(media_url) == 'm3u8':
+                    hdnea2 = self._get_cookies(media_url).get('hdnea2')
+                    if hdnea2:
+                        _format['url'] = update_url_query(media_url, {'hdnea3': hdnea2.value})
+
                 formats.append(_format)
 
         subtitles = self._parse_smil_subtitles(meta, default_ns)
@@ -151,6 +159,22 @@ class ThePlatformIE(ThePlatformBaseIE):
         'only_matching': True,
     }]
 
+    @classmethod
+    def _extract_urls(cls, webpage):
+        m = re.search(
+            r'''(?x)
+                    <meta\s+
+                        property=(["'])(?:og:video(?::(?:secure_)?url)?|twitter:player)\1\s+
+                        content=(["'])(?P<url>https?://player\.theplatform\.com/p/.+?)\2
+            ''', webpage)
+        if m:
+            return [m.group('url')]
+
+        matches = re.findall(
+            r'<(?:iframe|script)[^>]+src=(["\'])((?:https?:)?//player\.theplatform\.com/p/.+?)\1', webpage)
+        if matches:
+            return list(zip(*matches))[1]
+
     @staticmethod
     def _sign_url(url, sig_key, sig_secret, life=600, include_qs=False):
         flags = '10' if include_qs else '00'
@@ -159,11 +183,11 @@ class ThePlatformIE(ThePlatformBaseIE):
         def str_to_hex(str):
             return binascii.b2a_hex(str.encode('ascii')).decode('ascii')
 
-        def hex_to_str(hex):
-            return binascii.a2b_hex(hex)
+        def hex_to_bytes(hex):
+            return binascii.a2b_hex(hex.encode('ascii'))
 
         relative_path = re.match(r'https?://link.theplatform.com/s/([^?]+)', url).group(1)
-        clear_text = hex_to_str(flags + expiration_date + str_to_hex(relative_path))
+        clear_text = hex_to_bytes(flags + expiration_date + str_to_hex(relative_path))
         checksum = hmac.new(sig_key.encode('ascii'), clear_text, hashlib.sha1).hexdigest()
         sig = flags + expiration_date + checksum + str_to_hex(sig_secret)
         return '%s&sig=%s' % (url, sig)
@@ -269,6 +293,7 @@ class ThePlatformFeedIE(ThePlatformBaseIE):
             'timestamp': 1391824260,
             'duration': 467.0,
             'categories': ['MSNBC/Issues/Democrats', 'MSNBC/Issues/Elections/Election 2016'],
+            'uploader': 'NBCU-NEWS',
         },
     }
 
