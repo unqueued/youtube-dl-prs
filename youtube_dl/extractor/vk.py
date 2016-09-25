@@ -154,7 +154,7 @@ class VKIE(VKBaseIE):
                 'upload_date': '20121218',
                 'view_count': int,
             },
-            'skip': 'Requires vk account credentials',
+            'skip': 'Removed from public access by request of the copyright holder.',
         },
         {
             'url': 'http://vk.com/hd_kino_mania?z=video-43215063_168067957%2F15c66b9b533119788d',
@@ -162,12 +162,10 @@ class VKIE(VKBaseIE):
             'info_dict': {
                 'id': '168067957',
                 'ext': 'mp4',
-                'uploader': 'Киномания - лучшее из мира кино',
+                'uploader': 'Bro Mazter',
                 'title': ' ',
                 'duration': 7291,
-                'upload_date': '20140328',
             },
-            'skip': 'Requires vk account credentials',
         },
         {
             'url': 'http://m.vk.com/video-43215063_169084319?list=125c627d1aa1cebb83&from=wall-43215063_2566540',
@@ -204,11 +202,11 @@ class VKIE(VKBaseIE):
             'info_dict': {
                 'id': 'V3K4mi0SYkc',
                 'ext': 'webm',
-                'title': "DSWD Awards 'Children's Joy Foundation, Inc.' Certificate of Registration and License to Operate",
-                'description': 'md5:d9903938abdc74c738af77f527ca0596',
-                'duration': 178,
+                'title': 'md5:8e51c1d1bee9c3f19db32b6947dce6cc',
+                'description': 'md5:bf9c26cfa4acdfb146362682edd3827a',
+                'duration': 179,
                 'upload_date': '20130116',
-                'uploader': "Children's Joy Foundation",
+                'uploader': "Children's Joy Foundation, Inc.",
                 'uploader_id': 'thecjf',
                 'view_count': int,
             },
@@ -251,10 +249,12 @@ class VKIE(VKBaseIE):
             'info_dict': {
                 'id': '456242764',
                 'ext': 'mp4',
-                'title': 'ИгроМир 2016 — день 1',
+                'title': 'ИгроМир 2016 День 1 — Игромания Утром',
                 'uploader': 'Игромания',
                 'duration': 5239,
                 'view_count': int,
+                'timestamp': 1475148300,
+                'upload_date': '20160929',
             },
         },
         {
@@ -317,9 +317,21 @@ class VKIE(VKBaseIE):
                 'You are trying to log in from an unusual location. You should confirm ownership at vk.com to log in with this IP.',
                 expected=True)
 
+        if '<!>Please log in or <' in info_page:
+            # Try inline page instead. Many videos are available only when inlined in user feed.
+            # Fallback can be extended for other error messages if appropriate test case is provided
+            info_inline_url = 'https://vk.com/al_video.php?act=show_inline&al=1&module=video&video=%s' % video_id
+            info_page = self._download_webpage(info_inline_url, video_id)
+
         ERRORS = {
             r'>Видеозапись .*? была изъята из публичного доступа в связи с обращением правообладателя.<':
             'Video %s has been removed from public access due to rightholder complaint.',
+
+            r'> was removed from public access by request of the copyright holder.<':
+            'Video %s has been removed from public access by request of the copyright holder.',
+
+            r'<!>This video is being processed. Please wait.<':
+            'Video %s is being processed. Please wait.',
 
             r'<!>Please log in or <':
             'Video %s is only available for registered users, '
@@ -389,7 +401,7 @@ class VKIE(VKBaseIE):
         if not data:
             data = self._parse_json(
                 self._search_regex(
-                    r'<!json>\s*({.+?})\s*<!>', info_page, 'json', default='{}'),
+                    r'<!json>({(?:(?!<!>).)*})(?:<!>|$)', info_page, 'json', default='{}'),
                 video_id)
             if data:
                 data = data['player']['params'][0]
@@ -411,11 +423,11 @@ class VKIE(VKBaseIE):
 
         timestamp = unified_timestamp(self._html_search_regex(
             r'class=["\']mv_info_date[^>]+>([^<]+)(?:<|from)', info_page,
-            'upload date', fatal=False))
+            'upload date', default=None))
 
         view_count = str_to_int(self._search_regex(
             r'class=["\']mv_views_count[^>]+>\s*([\d,.]+)',
-            info_page, 'view count', fatal=False))
+            info_page, 'view count', default=None))
 
         formats = []
         for format_id, format_url in data.items():
