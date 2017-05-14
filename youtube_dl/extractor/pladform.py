@@ -34,7 +34,7 @@ class PladformIE(InfoExtractor):
             'ext': 'mp4',
             'title': 'Тайны перевала Дятлова • 1 серия 2 часть',
             'description': 'Документальный сериал-расследование одной из самых жутких тайн ХХ века',
-            'thumbnail': 're:^https?://.*\.jpg$',
+            'thumbnail': r're:^https?://.*\.jpg$',
             'duration': 694,
             'age_limit': 0,
         },
@@ -49,7 +49,7 @@ class PladformIE(InfoExtractor):
     @staticmethod
     def _extract_url(webpage):
         mobj = re.search(
-            r'<iframe[^>]+src="(?P<url>(?:https?:)?//out\.pladform\.ru/player\?.+?)"', webpage)
+            r'<iframe[^>]+src=(["\'])(?P<url>(?:https?:)?//out\.pladform\.ru/player\?.+?)\1', webpage)
         if mobj:
             return mobj.group('url')
 

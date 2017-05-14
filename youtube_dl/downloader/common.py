@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import time
+import random
 
 from ..compat import compat_os_name
 from ..utils import (
@@ -186,6 +187,9 @@ class FileDownloader(object):
             return filename[:-len('.part')]
         return filename
 
+    def ytdl_filename(self, filename):
+        return filename + '.ytdl'
+
     def try_rename(self, old_filename, new_filename):
         try:
             if old_filename == new_filename:
@@ -326,25 +330,31 @@ class FileDownloader(object):
             os.path.exists(encodeFilename(filename))
         )
 
-        continuedl_and_exists = (
-            self.params.get('continuedl', True) and
-            os.path.isfile(encodeFilename(filename)) and
-            not self.params.get('nopart', False)
-        )
+        if not hasattr(filename, 'write'):
+            continuedl_and_exists = (
+                self.params.get('continuedl', True) and
+                os.path.isfile(encodeFilename(filename)) and
+                not self.params.get('nopart', False)
+            )
 
-        # Check file already present
-        if filename != '-' and (nooverwrites_and_exists or continuedl_and_exists):
-            self.report_file_already_downloaded(filename)
-            self._hook_progress({
-                'filename': filename,
-                'status': 'finished',
-                'total_bytes': os.path.getsize(encodeFilename(filename)),
-            })
-            return True
+            # Check file already present
+            if filename != '-' and (nooverwrites_and_exists or continuedl_and_exists):
+                self.report_file_already_downloaded(filename)
+                self._hook_progress({
+                    'filename': filename,
+                    'status': 'finished',
+                    'total_bytes': os.path.getsize(encodeFilename(filename)),
+                })
+                return True
 
-        sleep_interval = self.params.get('sleep_interval')
-        if sleep_interval:
-            self.to_screen('[download] Sleeping %s seconds...' % sleep_interval)
+        min_sleep_interval = self.params.get('sleep_interval')
+        if min_sleep_interval:
+            max_sleep_interval = self.params.get('max_sleep_interval', min_sleep_interval)
+            sleep_interval = random.uniform(min_sleep_interval, max_sleep_interval)
+            self.to_screen(
+                '[download] Sleeping %s seconds...' % (
+                    int(sleep_interval) if sleep_interval.is_integer()
+                    else '%.2f' % sleep_interval))
             time.sleep(sleep_interval)
 
         return self.real_download(filename, info_dict)

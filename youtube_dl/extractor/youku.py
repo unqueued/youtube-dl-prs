@@ -10,13 +10,14 @@ import time
 
 from .common import InfoExtractor
 from ..compat import (
-    compat_urllib_parse_urlencode,
     compat_ord,
+    compat_str,
+    compat_urllib_parse_urlencode,
 )
 from ..utils import (
     ExtractorError,
     get_element_by_attribute,
-    sanitized_Request,
+    try_get,
 )
 
 
@@ -106,7 +107,9 @@ class YoukuIE(InfoExtractor):
             if stream.get('channel_type') == 'tail':
                 continue
             format = stream.get('stream_type')
-            fileid = stream['stream_fileid']
+            fileid = try_get(
+                stream, lambda x: x['segs'][0]['fileid'],
+                compat_str) or stream['stream_fileid']
             fileid_dict[format] = fileid
 
         def get_fileid(format, n):
@@ -218,14 +221,10 @@ class YoukuIE(InfoExtractor):
             headers = {
                 'Referer': req_url,
             }
+            headers.update(self.geo_verification_headers())
             self._set_cookie('youku.com', 'xreferrer', 'http://www.youku.com')
-            req = sanitized_Request(req_url, headers=headers)
 
-            cn_verification_proxy = self._downloader.params.get('cn_verification_proxy')
-            if cn_verification_proxy:
-                req.add_header('Ytdl-request-proxy', cn_verification_proxy)
-
-            raw_data = self._download_json(req, video_id, note=note)
+            raw_data = self._download_json(req_url, video_id, note=note, headers=headers)
 
             return raw_data['data']
 

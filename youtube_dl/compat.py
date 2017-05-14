@@ -1,3 +1,4 @@
+# coding: utf-8
 from __future__ import unicode_literals
 
 import binascii
@@ -2343,7 +2344,7 @@ try:
     from urllib.parse import unquote_plus as compat_urllib_parse_unquote_plus
 except ImportError:  # Python 2
     _asciire = (compat_urllib_parse._asciire if hasattr(compat_urllib_parse, '_asciire')
-                else re.compile('([\x00-\x7f]+)'))
+                else re.compile(r'([\x00-\x7f]+)'))
 
     # HACK: The following are the correct unquote_to_bytes, unquote and unquote_plus
     # implementations from cpython 3.4.3's stdlib. Python 2's version
@@ -2490,6 +2491,7 @@ class _TreeBuilder(etree.TreeBuilder):
     def doctype(self, name, pubid, system):
         pass
 
+
 if sys.version_info[0] >= 3:
     def compat_etree_fromstring(text):
         return etree.XML(text, parser=etree.XMLParser(target=_TreeBuilder()))
@@ -2526,6 +2528,24 @@ else:
             if el.text is not None and isinstance(el.text, bytes):
                 el.text = el.text.decode('utf-8')
         return doc
+
+if hasattr(etree, 'register_namespace'):
+    compat_etree_register_namespace = etree.register_namespace
+else:
+    def compat_etree_register_namespace(prefix, uri):
+        """Register a namespace prefix.
+        The registry is global, and any existing mapping for either the
+        given prefix or the namespace URI will be removed.
+        *prefix* is the namespace prefix, *uri* is a namespace uri. Tags and
+        attributes in this namespace will be serialized with prefix if possible.
+        ValueError is raised if prefix is reserved or is invalid.
+        """
+        if re.match(r"ns\d+$", prefix):
+            raise ValueError("Prefix format reserved for internal use")
+        for k, v in list(etree._namespace_map.items()):
+            if k == uri or v == prefix:
+                del etree._namespace_map[k]
+        etree._namespace_map[uri] = prefix
 
 if sys.version_info < (2, 7):
     # Here comes the crazy part: In 2.6, if the xpath is a unicode,
@@ -2594,15 +2614,19 @@ except ImportError:  # Python < 3.3
             return "'" + s.replace("'", "'\"'\"'") + "'"
 
 
-if sys.version_info >= (2, 7, 3):
+try:
+    args = shlex.split('中文')
+    assert (isinstance(args, list) and
+            isinstance(args[0], compat_str) and
+            args[0] == '中文')
     compat_shlex_split = shlex.split
-else:
+except (AssertionError, UnicodeEncodeError):
     # Working around shlex issue with unicode strings on some python 2
     # versions (see http://bugs.python.org/issue1548891)
     def compat_shlex_split(s, comments=False, posix=True):
         if isinstance(s, compat_str):
             s = s.encode('utf-8')
-        return shlex.split(s, comments, posix)
+        return list(map(lambda s: s.decode('utf-8'), shlex.split(s, comments, posix)))
 
 
 def compat_ord(c):
@@ -2668,7 +2692,7 @@ else:
                 userhome = pwent.pw_dir
             userhome = userhome.rstrip('/')
             return (userhome + path[i:]) or '/'
-    elif compat_os_name == 'nt' or compat_os_name == 'ce':
+    elif compat_os_name in ('nt', 'ce'):
         def compat_expanduser(path):
             """Expand ~ and ~user constructs.
 
@@ -2736,6 +2760,12 @@ else:
     compat_kwargs = lambda kwargs: kwargs
 
 
+try:
+    compat_numeric_types = (int, float, long, complex)
+except NameError:  # Python 3
+    compat_numeric_types = (int, float, complex)
+
+
 if sys.version_info < (2, 7):
     def compat_socket_create_connection(address, timeout, source_address=None):
         host, port = address
@@ -2781,6 +2811,7 @@ def workaround_optparse_bug9161():
                 (k, enc(v)) for k, v in kwargs.items())
             return real_add_option(self, *bargs, **bkwargs)
         optparse.OptionGroup.add_option = _compat_add_option
+
 
 if hasattr(shutil, 'get_terminal_size'):  # Python >= 3.3
     compat_get_terminal_size = shutil.get_terminal_size
@@ -2858,6 +2889,7 @@ __all__ = [
     'compat_cookiejar',
     'compat_cookies',
     'compat_etree_fromstring',
+    'compat_etree_register_namespace',
     'compat_expanduser',
     'compat_get_terminal_size',
     'compat_getenv',
@@ -2869,6 +2901,7 @@ __all__ = [
     'compat_input',
     'compat_itertools_count',
     'compat_kwargs',
+    'compat_numeric_types',
     'compat_ord',
     'compat_os_name',
     'compat_parse_qs',
