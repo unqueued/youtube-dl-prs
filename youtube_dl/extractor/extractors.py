@@ -595,7 +595,7 @@ from .mtv import (
 from .muenchentv import MuenchenTVIE
 from .musicplayon import MusicPlayOnIE
 from .mwave import MwaveIE, MwaveMeetGreetIE
-from .myspace import MySpaceIE, MySpaceAlbumIE, MySpaceArtistSongsIE
+from .myspace import MySpaceIE, MySpaceAlbumIE, MySpaceArtistIE
 from .myspass import MySpassIE
 from .myvi import MyviIE
 from .myvideo import MyVideoIE
