@@ -746,7 +746,9 @@ from .packtpub import (
     PacktPubCourseIE,
 )
 from .palcomp3 import (
-    PalcoMP3IE
+    PalcoMP3IE,
+    PalcoMP3ArtistIE,
+    PalcoMP3VideoIE,
 )
 from .pandatv import PandaTVIE
 from .pandoratv import PandoraTVIE
