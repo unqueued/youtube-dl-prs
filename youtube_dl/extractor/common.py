@@ -2205,8 +2205,9 @@ class InfoExtractor(object):
 
     def _extract_wowza_formats(self, url, video_id, m3u8_entry_protocol='m3u8_native', skip_protocols=[]):
         url = re.sub(r'/(?:manifest|playlist|jwplayer)\.(?:m3u8|f4m|mpd|smil)', '', url)
-        url_base = self._search_regex(r'(?:https?|rtmp|rtsp)(://[^?]+)', url, 'format url')
-        http_base_url = 'http' + url_base
+        url_base = self._search_regex(
+            r'(?:(?:https?|rtmp|rtsp):)?(//[^?]+)', url, 'format url')
+        http_base_url = '%s:%s' % ('http', url_base)
         formats = []
         if 'm3u8' not in skip_protocols:
             formats.extend(self._extract_m3u8_formats(
@@ -2240,7 +2241,7 @@ class InfoExtractor(object):
             for protocol in ('rtmp', 'rtsp'):
                 if protocol not in skip_protocols:
                     formats.append({
-                        'url': protocol + url_base,
+                        'url': '%s:%s' % (protocol, url_base),
                         'format_id': protocol,
                         'protocol': protocol,
                     })
