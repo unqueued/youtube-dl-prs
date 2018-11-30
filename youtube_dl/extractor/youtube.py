@@ -1780,7 +1780,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
                         self._downloader.report_warning('Unable to extract storyboard')
                         continue
 
-                    storyboards_url = base_url.replace('$L', compat_str(i)) + '?'
+                    storyboards_url = base_url.replace('$L', compat_str(i)) + '&'
                     for j in range(n_images):
                         url = storyboards_url.replace('$N', filename).replace('$M', compat_str(j)) + 'sigh=' + sigh
                         if j == n_images-1:
