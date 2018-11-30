@@ -1743,7 +1743,16 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
 
         def get_storyboards(video_info):
             storyboards = []
-            spec = video_info.get('storyboard_spec', [])
+            
+            player_response = video_info.get('player_response', [])
+            if len(player_response) > 0 and isinstance(player_response[0], compat_str):
+                player_response = self._parse_json(
+                    player_response[0], video_id, fatal=False)
+                if player_response:
+                    spec = [player_response['storyboards']['playerStoryboardSpecRenderer']['spec']]
+
+            else:
+                spec = video_info.get('storyboard_spec', [])
 
             for s in spec:
                 s_parts = s.split('|')
