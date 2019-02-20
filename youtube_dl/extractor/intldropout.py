@@ -1,14 +1,13 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
-from .common import InfoExtractor
-
 from .vimeo import VHXEmbedIE
 
 from ..utils import (
     ExtractorError,
     sanitized_Request,
-    urlencode_postdata
+    urlencode_postdata,
+    RegexNotFoundError
 )
 
 import re
@@ -31,9 +30,10 @@ import re
 
 
 class IntlDropoutIE(VHXEmbedIE):
+    IE_DESC = 'International Dropout.tv'
     _LOGIN_URL = 'https://intl.dropout.tv/login'
     _LOGOUT_URL = 'https://intl.dropout.tv/logout'
-    _VALID_URL = r'https://intl\.dropout\.tv/(?P<id>[^/]+/.+)'
+    _VALID_URL = r'https://intl\.dropout\.tv/(?P<id>.+)'
     _TEST = {
         'url': 'https://intl.dropout.tv/um-actually/season:1/videos/c-3po-s-origins-hp-lovecraft-the-food-album-with-weird-al-yankovic',
         'md5': 'TODO: md5 sum of the first 10241 bytes of the video file (use --test)',
@@ -59,16 +59,16 @@ class IntlDropoutIE(VHXEmbedIE):
             if self._downloader.params.get('cookiefile') is None:
                 raise ExtractorError('No login info available, needed for using %s.' % self.IE_NAME, expected=True)
             return True
-        
+
         login_page = self._download_webpage(
             self._LOGIN_URL, None,
             note='Downloading login page',
             errnote='unable to fetch login page', fatal=False
         )
-        
+
         if login_page is False:
             return
-        
+
         login_form = self._hidden_inputs(login_page)
 
         login_form.update({
@@ -76,7 +76,7 @@ class IntlDropoutIE(VHXEmbedIE):
             'email': email,
             'password': password
         })
-        
+
         request = sanitized_Request(
             self._LOGIN_URL, urlencode_postdata(login_form))
         request.add_header('Content-Type', 'application/x-www-form-urlencoded')
@@ -84,18 +84,15 @@ class IntlDropoutIE(VHXEmbedIE):
             self._download_webpage(request, None, 'Logging in')
         except Exception:
             print('error')
-    
+
     def _real_extract(self, url):
         webpage = self._download_webpage(url, None)
-        embed = self._html_search_regex(r'<iframe[^>]+"(?P<embed>https://embed.vhx.tv/videos/[0-9]+[^"]*)"[^>]*>', webpage, 'embed')
+        try:
+            video = self._html_search_regex(r'<iframe[^>]+"(?P<embed>https://embed.vhx.tv/videos/[0-9]+[^"]*)"[^>]*>', webpage, 'embed')
+        except RegexNotFoundError:
+            items = re.findall(r'<a href="(?P<url>https://intl.dropout.tv/videos/[^"]+)"', webpage)
+            playlist_id = self._search_regex(r'https://intl.dropout.tv/(?P<id>.+)', url, 'id')
+            playlist_title = self._html_search_regex(r'<h1 class="[^"]*collection-title[^"]*"[^>]*>(?P<title>[^<]+)<', webpage, 'title')
+            return self.playlist_from_matches(items, playlist_id=playlist_id, playlist_title=playlist_title)
 
-        print(embed)
-
-        self._download_webpage(
-            self._LOGOUT_URL, None,
-            note='logging out',
-            errnote='unable to logout', fatal=False
-        )
-
-        return self.url_result(embed)
-
+        return self.url_result(video)
