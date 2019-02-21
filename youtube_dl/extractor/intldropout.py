@@ -37,17 +37,15 @@ class IntlDropoutIE(VHXEmbedIE):
     _VALID_URL = r'https://intl\.dropout\.tv/(?P<id>.+)'
     _TEST = {
         'url': 'https://intl.dropout.tv/um-actually/season:1/videos/c-3po-s-origins-hp-lovecraft-the-food-album-with-weird-al-yankovic',
-        'md5': 'TODO: md5 sum of the first 10241 bytes of the video file (use --test)',
+        'md5': 'e6cbf01c24ad9fb8281c23357416ec97',
         'info_dict': {
-            'id': '42',
+            'id': '397785',
             'ext': 'mp4',
-            'title': 'Video title goes here',
+            'title': "C-3PO's Origins, HP Lovecraft, the Food Album (with Weird Al Yankovic)",
             'thumbnail': r're:^https?://.*\.jpg$',
-            # TODO more properties, either as:
-            # * A value
-            # * MD5 checksum; start the string with md5:
-            # * A regular expression; start the string with re:
-            # * Any Python type (for example int or float)
+            'description': 'Caldwell Tanner, Siobhan Thompson, and Nate Dern inspect guns and review the Diagon Alley bar scene.',
+            'upload_date': '20181206',
+            'timestamp': 1544117975,
         }
     }
 
@@ -64,7 +62,8 @@ class IntlDropoutIE(VHXEmbedIE):
         login_page = self._download_webpage(
             self._LOGIN_URL, None,
             note='Downloading login page',
-            errnote='unable to fetch login page', fatal=False
+            errnote='unable to fetch login page', fatal=False,
+            expected_status=200
         )
 
         if login_page is False:
@@ -82,18 +81,27 @@ class IntlDropoutIE(VHXEmbedIE):
             self._LOGIN_URL, urlencode_postdata(login_form))
         request.add_header('Content-Type', 'application/x-www-form-urlencoded')
         try:
-            self._download_webpage(request, None, 'Logging in')
+            self._download_webpage(request, None, 'Logging in', expected_status=302)
         except Exception:
-            print('error')
+            raise ExtractorError(
+                'Unable to login',
+                expected=True)
 
     def _real_extract(self, url):
-        webpage = self._download_webpage(url, None)
         try:
-            video = self._html_search_regex(r'<iframe[^>]+"(?P<embed>https://embed.vhx.tv/videos/[0-9]+[^"]*)"[^>]*>', webpage, 'embed')
+            webpage = self._download_webpage(url, None, expected_status=200)
+        except Exception:
+            raise ExtractorError(
+                'Unable to fetch page',
+                expected=True)
+        try:
+            video = self._html_search_regex(r'<iframe[^>]*"(?P<embed>https://embed.vhx.tv/videos/[0-9]+[^"]*)"[^>]*>', webpage, 'embed')
         except RegexNotFoundError:
             items = re.findall(r'<a href="(?P<url>https://intl.dropout.tv/videos/[^"]+)"', webpage)
             playlist_id = self._search_regex(r'https://intl.dropout.tv/(?P<id>.+)', url, 'id')
             playlist_title = self._html_search_regex(r'<h1 class="[^"]*collection-title[^"]*"[^>]*>(?P<title>[^<]+)<', webpage, 'title')
             return self.playlist_from_matches(items, playlist_id=playlist_id, playlist_title=playlist_title)
 
-        return self.url_result(video)
+        video_id = self._search_regex(r'https://embed.vhx.tv/videos/(?P<id>[0-9]+)', video, 'id')
+        video_title = self._html_search_regex(r'<h1 class="[^"]*video-title[^"]*"[^>]*>(<strong>)?(?P<title>[^<]+)<', webpage, 'title')
+        return self.url_result(video, video_id=video_id, video_title=video_title)
