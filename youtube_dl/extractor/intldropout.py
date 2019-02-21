@@ -31,6 +31,7 @@ import re
 
 class IntlDropoutIE(VHXEmbedIE):
     IE_DESC = 'International Dropout.tv'
+    _NETRC_MACHINE = 'intl.dropout.tv'
     _LOGIN_URL = 'https://intl.dropout.tv/login'
     _LOGOUT_URL = 'https://intl.dropout.tv/logout'
     _VALID_URL = r'https://intl\.dropout\.tv/(?P<id>.+)'
