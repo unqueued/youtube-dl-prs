@@ -7,7 +7,6 @@ from ..utils import (
     ExtractorError,
     sanitized_Request,
     urlencode_postdata,
-    RegexNotFoundError
 )
 
 import re
@@ -35,20 +34,35 @@ class IntlDropoutIE(VHXEmbedIE):
     _NETRC_MACHINE = 'intl.dropout.tv'
     _LOGIN_URL = 'https://intl.dropout.tv/login'
     _LOGOUT_URL = 'https://intl.dropout.tv/logout'
-    _VALID_URL = r'https://intl\.dropout\.tv/(?P<id>.+)'
-    _TEST = {
-        'url': 'https://intl.dropout.tv/um-actually/season:1/videos/c-3po-s-origins-hp-lovecraft-the-food-album-with-weird-al-yankovic',
-        'md5': 'e6cbf01c24ad9fb8281c23357416ec97',
-        'info_dict': {
-            'id': '397785',
-            'ext': 'mp4',
-            'title': "C-3PO's Origins, HP Lovecraft, the Food Album (with Weird Al Yankovic)",
-            'thumbnail': r're:^https?://.*\.jpg$',
-            'description': 'Caldwell Tanner, Siobhan Thompson, and Nate Dern inspect guns and review the Diagon Alley bar scene.',
-            'upload_date': '20181206',
-            'timestamp': 1544117975,
+    _VALID_URL = r'https://intl\.dropout\.tv/([^/]+/season:[^/]+/)?videos/(?P<id>.+)'
+    _TESTS = [
+        {
+            'url': 'https://intl.dropout.tv/um-actually/season:1/videos/c-3po-s-origins-hp-lovecraft-the-food-album-with-weird-al-yankovic',
+            'md5': '8beaac579b6ba762f63cd452fd28dcce',
+            'info_dict': {
+                'id': '397785',
+                'ext': 'mp4',
+                'title': "C-3PO's Origins, HP Lovecraft, the Food Album (with Weird Al Yankovic)",
+                'thumbnail': r're:^https://vhx.imgix.net/.*\.jpg$',
+                'description': 'Caldwell Tanner, Siobhan Thompson, and Nate Dern inspect guns and review the Diagon Alley bar scene.',
+                'upload_date': '20181206',
+                'timestamp': 1544117975,
+            }
+        },
+        {
+            'url': 'https://intl.dropout.tv/videos/um-actually-behind-the-scenes',
+            'md5': 'b974927cd563423fe50945dbfdbb894c',
+            'info_dict': {
+                'id': '397943',
+                'ext': 'mp4',
+                'title': 'Um, Actually: Behind the Scenes',
+                'thumbnail': r're:^https://vhx.imgix.net/.*\.jpg$',
+                'description': 'What does it take to stump the nerdy? Mike Trapp and team pull back the curtain.',
+                'upload_date': '20181206',
+                'timestamp': 1544118409,
+            }
         }
-    }
+    ]
 
     def _real_initialize(self):
         self._login()
@@ -95,14 +109,44 @@ class IntlDropoutIE(VHXEmbedIE):
             raise ExtractorError(
                 'Unable to fetch page',
                 expected=True)
-        try:
-            video = self._html_search_regex(r'<iframe[^>]*"(?P<embed>https://embed.vhx.tv/videos/[0-9]+[^"]*)"[^>]*>', webpage, 'embed')
-        except RegexNotFoundError:
-            items = re.findall(r'<a href="(?P<url>https://intl.dropout.tv/videos/[^"]+)"', webpage)
-            playlist_id = self._search_regex(r'https://intl.dropout.tv/(?P<id>.+)', url, 'id')
-            playlist_title = self._html_search_regex(r'<h1 class="[^"]*collection-title[^"]*"[^>]*>(?P<title>[^<]+)<', webpage, 'title')
-            return self.playlist_from_matches(items, playlist_id=playlist_id, playlist_title=playlist_title)
-
+        video = self._html_search_regex(r'<iframe[^>]*"(?P<embed>https://embed.vhx.tv/videos/[0-9]+[^"]*)"[^>]*>', webpage, 'embed')
         video_id = self._search_regex(r'https://embed.vhx.tv/videos/(?P<id>[0-9]+)', video, 'id')
         video_title = self._html_search_regex(r'<h1 class="[^"]*video-title[^"]*"[^>]*>(<strong>)?(?P<title>[^<]+)<', webpage, 'title')
         return self.url_result(video, video_id=video_id, video_title=video_title)
+
+
+class IntlDropoutPlaylistIE(IntlDropoutIE):
+    IE_NAME = 'intldropout:playlist'
+    _VALID_URL = r'^https://intl\.dropout\.tv/(?P<id>[^/]+(/season:[^/]+)?)$'
+    _TESTS = [
+        {
+            'url': 'https://intl.dropout.tv/um-actually-the-web-series',
+            'md5': 'ebcd26ef54f546225e7cb96e79da31cc',
+            'playlist_count': 9,
+            'info_dict': {
+                'id': 'um-actually-the-web-series',
+                'title': 'Um, Actually: The Web Series',
+            }
+        },
+        {
+            'url': 'https://intl.dropout.tv/new-releases',
+            'md5': 'ebcd26ef54f546225e7cb96e79da31cc',
+            'playlist_count': 21,
+            'info_dict': {
+                'id': 'new-releases',
+                'title': 'New Releases',
+            }
+        }
+    ]
+
+    def _real_extract(self, url):
+        try:
+            webpage = self._download_webpage(url, None, expected_status=200)
+        except Exception:
+            raise ExtractorError(
+                'Unable to fetch page',
+                expected=True)
+        items = re.findall(r'<a href="(?P<url>https://intl.dropout.tv/[^/]+/[^"]+)"', webpage)
+        playlist_id = self._search_regex(r'https://intl.dropout.tv/(?P<id>.+)', url, 'id')
+        playlist_title = self._html_search_regex(r'<h1 class="[^"]*collection-title[^"]*"[^>]*>(?P<title>[^<]+)<', webpage, 'title')
+        return self.playlist_from_matches(items, playlist_id=playlist_id, playlist_title=playlist_title)
