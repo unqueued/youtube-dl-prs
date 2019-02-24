@@ -11,22 +11,6 @@ from ..utils import (
 
 import re
 
-# https://intl.dropout.tv/login
-# GET
-# authenticity_token
-
-# https://intl.dropout.tv/login
-# POST
-# authenticity_token
-# email
-# password
-# utf8 ✓
-
-
-# https://embed.vhx.tv/videos/414462?api=1&autoplay=1&referrer=https%3A%2F%2Fintl.dropout.tv%2Fbrowse&playsinline=1&title=0&context=https%3A%2F%2Fintl.dropout.tv%2Fbrowse&back=Browse&color=feea3b&sharing=1&auth-user-token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo1Mzk0NDEwLCJleHAiOjE1NDc0NzA1NDB9._y4H94pKyIOu_GT11qC2SeJnSou6EzN9jI1A-P3tbo8&live=0
-# https://vhx-adaptive-hap.akamaized.net/-ctx--user_id,5394410--platform_id,27--video_id,414462--channel_id,55407--plan,standard-/vods3cf/0/amlst:c-55407/v-414462/2220471,2220472,2220473,2220474,2220475,2220476/playlist.m3u8?token=exp=1547481565~acl=/-ctx--user_id,5394410--platform_id,27--video_id,414462--channel_id,55407--plan,standard-/vods3cf/0/amlst:c-55407/v-414462/2220471,2220472,2220473,2220474,2220475,2220476/*~hmac=ceb8508146d2dec2b868db9ca304ec13d54502cca0a7d1cd0def7a85a9ef3962&
-# https://api.vhx.tv/videos/414462/files?auth_user_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo1Mzk0NDEwLCJleHAiOjE1NDc0NzA1NDB9._y4H94pKyIOu_GT11qC2SeJnSou6EzN9jI1A-P3tbo8&_=1547463565300
-
 
 class IntlDropoutIE(VHXEmbedIE):
     IE_NAME = 'intldropout'
@@ -77,8 +61,7 @@ class IntlDropoutIE(VHXEmbedIE):
         login_page = self._download_webpage(
             self._LOGIN_URL, None,
             note='Downloading login page',
-            errnote='unable to fetch login page', fatal=False,
-            expected_status=200
+            errnote='unable to fetch login page', fatal=False
         )
 
         if login_page is False:
@@ -103,12 +86,7 @@ class IntlDropoutIE(VHXEmbedIE):
                 expected=True)
 
     def _real_extract(self, url):
-        try:
-            webpage = self._download_webpage(url, None, expected_status=200)
-        except Exception:
-            raise ExtractorError(
-                'Unable to fetch page',
-                expected=True)
+        webpage = self._download_webpage(url, None)
         video = self._html_search_regex(r'<iframe[^>]*"(?P<embed>https://embed.vhx.tv/videos/[0-9]+[^"]*)"[^>]*>', webpage, 'embed')
         video_id = self._search_regex(r'https://embed.vhx.tv/videos/(?P<id>[0-9]+)', video, 'id')
         video_title = self._html_search_regex(r'<h1 class="[^"]*video-title[^"]*"[^>]*>(<strong>)?(?P<title>[^<]+)<', webpage, 'title')
@@ -117,7 +95,7 @@ class IntlDropoutIE(VHXEmbedIE):
 
 class IntlDropoutPlaylistIE(IntlDropoutIE):
     IE_NAME = 'intldropout:playlist'
-    _VALID_URL = r'^https://intl\.dropout\.tv/(?P<id>[^/]+(/season:[^/]+)?)$'
+    _VALID_URL = r'^https://intl\.dropout\.tv/(?P<id>[^/]+(/season:[^/]+)?)'
     _TESTS = [
         {
             'url': 'https://intl.dropout.tv/um-actually-the-web-series',
@@ -140,13 +118,8 @@ class IntlDropoutPlaylistIE(IntlDropoutIE):
     ]
 
     def _real_extract(self, url):
-        try:
-            webpage = self._download_webpage(url, None, expected_status=200)
-        except Exception:
-            raise ExtractorError(
-                'Unable to fetch page',
-                expected=True)
-        items = re.findall(r'<a href="(?P<url>https://intl.dropout.tv/[^/]+/[^"]+)"', webpage)
         playlist_id = self._search_regex(r'https://intl.dropout.tv/(?P<id>.+)', url, 'id')
+        webpage = self._download_webpage(url, playlist_id)
+        items = re.findall(r'<a href="(?P<url>https://intl.dropout.tv/[^/]+/[^"]+)"', webpage)
         playlist_title = self._html_search_regex(r'<h1 class="[^"]*collection-title[^"]*"[^>]*>(?P<title>[^<]+)<', webpage, 'title')
         return self.playlist_from_matches(items, playlist_id=playlist_id, playlist_title=playlist_title)
