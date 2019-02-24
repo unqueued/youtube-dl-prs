@@ -18,7 +18,7 @@ class IntlDropoutIE(VHXEmbedIE):
     _NETRC_MACHINE = 'intl.dropout.tv'
     _LOGIN_URL = 'https://intl.dropout.tv/login'
     _LOGOUT_URL = 'https://intl.dropout.tv/logout'
-    _VALID_URL = r'https://intl\.dropout\.tv/([^/]+/season:[^/]+/)?videos/(?P<id>.+)'
+    _VALID_URL = r'https://intl\.dropout\.tv/(?:[^/]+/season:[^/]+/)?videos/(?P<id>.+)'
     _TESTS = [
         {
             'url': 'https://intl.dropout.tv/um-actually/season:1/videos/c-3po-s-origins-hp-lovecraft-the-food-album-with-weird-al-yankovic',
@@ -89,13 +89,13 @@ class IntlDropoutIE(VHXEmbedIE):
         webpage = self._download_webpage(url, None)
         video = self._html_search_regex(r'<iframe[^>]*"(?P<embed>https://embed.vhx.tv/videos/[0-9]+[^"]*)"[^>]*>', webpage, 'embed')
         video_id = self._search_regex(r'https://embed.vhx.tv/videos/(?P<id>[0-9]+)', video, 'id')
-        video_title = self._html_search_regex(r'<h1 class="[^"]*video-title[^"]*"[^>]*>(<strong>)?(?P<title>[^<]+)<', webpage, 'title')
+        video_title = self._html_search_regex(r'<h1 class="[^"]*video-title[^"]*"[^>]*><strong>(?P<title>[^<]+)<', webpage, 'title')
         return self.url_result(video, video_id=video_id, video_title=video_title)
 
 
 class IntlDropoutPlaylistIE(IntlDropoutIE):
     IE_NAME = 'intldropout:playlist'
-    _VALID_URL = r'^https://intl\.dropout\.tv/(?P<id>[^/]+(/season:[^/]+)?)'
+    _VALID_URL = r'^https://intl\.dropout\.tv/(?P<id>[^/]+(/season:[^/]+)?)$'
     _TESTS = [
         {
             'url': 'https://intl.dropout.tv/um-actually-the-web-series',
