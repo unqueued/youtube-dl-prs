@@ -109,7 +109,7 @@ class IntlDropoutPlaylistIE(IntlDropoutIE):
         {
             'url': 'https://intl.dropout.tv/new-releases',
             'md5': 'ebcd26ef54f546225e7cb96e79da31cc',
-            'playlist_count': 21,
+            'playlist_count': 16,
             'info_dict': {
                 'id': 'new-releases',
                 'title': 'New Releases',
