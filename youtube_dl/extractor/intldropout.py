@@ -95,7 +95,7 @@ class IntlDropoutIE(VHXEmbedIE):
 
 class IntlDropoutPlaylistIE(IntlDropoutIE):
     IE_NAME = 'intldropout:playlist'
-    _VALID_URL = r'^https://intl\.dropout\.tv/(?P<id>[^/]+(/season:[^/]+)?)$'
+    _VALID_URL = r'^https://intl\.dropout\.tv/(?P<id>.+)'
     _TESTS = [
         {
             'url': 'https://intl.dropout.tv/um-actually-the-web-series',
@@ -114,8 +114,21 @@ class IntlDropoutPlaylistIE(IntlDropoutIE):
                 'id': 'new-releases',
                 'title': 'New Releases',
             }
+        },
+        {
+            'url': 'https://intl.dropout.tv/troopers/season:2',
+            'md5': 'ebcd26ef54f546225e7cb96e79da31cc',
+            'playlist_count': 10,
+            'info_dict': {
+                'id': 'troopers/season:2',
+                'title': 'Troopers',
+            }
         }
     ]
+
+    @classmethod
+    def suitable(cls, url):
+        return False if IntlDropoutIE.suitable(url) else super(IntlDropoutPlaylistIE, cls).suitable(url)
 
     def _real_extract(self, url):
         playlist_id = self._search_regex(r'https://intl.dropout.tv/(?P<id>.+)', url, 'id')
