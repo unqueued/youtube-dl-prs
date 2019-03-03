@@ -184,7 +184,7 @@ DATE_FORMATS_MONTH_FIRST.extend([
 ])
 
 PACKED_CODES_RE = r"}\('(.+)',(\d+),(\d+),'([^']+)'\.split\('\|'\)"
-JSON_LD_RE = r'(?is)<script[^>]+type=(["\'])application/ld\+json\1[^>]*>(?P<json_ld>.+?)</script>'
+JSON_LD_RE = r'(?is)<script[^>]+type=(["\']?)application/ld\+json\1[^>]*>(?P<json_ld>.+?)</script>'
 
 
 def preferredencoding():
@@ -1141,6 +1141,8 @@ class YoutubeDLHTTPSHandler(compat_urllib_request.HTTPSHandler):
 
 
 class YoutubeDLCookieJar(compat_cookiejar.MozillaCookieJar):
+    _HTTPONLY_PREFIX = '#HttpOnly_'
+
     def save(self, filename=None, ignore_discard=False, ignore_expires=False):
         # Store session cookies with `expires` set to 0 instead of an empty
         # string
@@ -1150,7 +1152,21 @@ class YoutubeDLCookieJar(compat_cookiejar.MozillaCookieJar):
         compat_cookiejar.MozillaCookieJar.save(self, filename, ignore_discard, ignore_expires)
 
     def load(self, filename=None, ignore_discard=False, ignore_expires=False):
-        compat_cookiejar.MozillaCookieJar.load(self, filename, ignore_discard, ignore_expires)
+        """Load cookies from a file."""
+        if filename is None:
+            if self.filename is not None:
+                filename = self.filename
+            else:
+                raise ValueError(compat_cookiejar.MISSING_FILENAME_TEXT)
+
+        cf = io.StringIO()
+        with open(filename) as f:
+            for line in f:
+                if line.startswith(self._HTTPONLY_PREFIX):
+                    line = line[len(self._HTTPONLY_PREFIX):]
+                cf.write(compat_str(line))
+        cf.seek(0)
+        self._really_load(cf, filename, ignore_discard, ignore_expires)
         # Session cookies are denoted by either `expires` field set to
         # an empty string or 0. MozillaCookieJar only recognizes the former
         # (see [1]). So we need force the latter to be recognized as session
@@ -1868,7 +1884,7 @@ def urljoin(base, path):
         path = path.decode('utf-8')
     if not isinstance(path, compat_str) or not path:
         return None
-    if re.match(r'^(?:https?:)?//', path):
+    if re.match(r'^(?:[a-zA-Z][a-zA-Z0-9+-.]*:)?//', path):
         return path
     if isinstance(base, bytes):
         base = base.decode('utf-8')
