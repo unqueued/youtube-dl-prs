@@ -109,7 +109,7 @@ class IntlDropoutPlaylistIE(IntlDropoutIE):
         {
             'url': 'https://intl.dropout.tv/new-releases',
             'md5': 'ebcd26ef54f546225e7cb96e79da31cc',
-            'playlist_count': 16,
+            'playlist_count': 22,
             'info_dict': {
                 'id': 'new-releases',
                 'title': 'New Releases',
@@ -133,6 +133,6 @@ class IntlDropoutPlaylistIE(IntlDropoutIE):
     def _real_extract(self, url):
         playlist_id = self._search_regex(r'https://intl.dropout.tv/(?P<id>.+)', url, 'id')
         webpage = self._download_webpage(url, playlist_id)
-        items = re.findall(r'<a href="(?P<url>https://intl.dropout.tv/[^/]+/[^"]+)"', webpage)
+        items = re.findall(r'browse-item-title[^>]+>[^<]*<a href="(?P<url>https://intl.dropout.tv/[^/]+/[^"]+)"', webpage)
         playlist_title = self._html_search_regex(r'<h1 class="[^"]*collection-title[^"]*"[^>]*>(?P<title>[^<]+)<', webpage, 'title')
         return self.playlist_from_matches(items, playlist_id=playlist_id, playlist_title=playlist_title)
