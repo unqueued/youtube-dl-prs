@@ -442,11 +442,11 @@ class BandcampUserIE(InfoExtractor):
 
         webpage = self._download_webpage(url, uploader)
 
-        album_elements = re.findall(r'<a href="/album/(.[^"]+)">', webpage)
+        album_elements = re.findall(r'<a href="/(album/.[^"]+)">', webpage)
 
         entries = [
             self.url_result(
-                compat_urlparse.urljoin(url, 'album/%s' % album_id),
+                compat_urlparse.urljoin(url, album_id),
                 ie=BandcampAlbumIE.ie_key(),
                 video_id='{}-{}'.format(uploader, album_id),
                 video_title=album_id,
