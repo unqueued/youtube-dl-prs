@@ -443,7 +443,7 @@ class BandcampUserIE(InfoExtractor):
 
         entries = [
             self.url_result(
-                compat_urlparse.urljoin(url, 'album/{}'.format(album_id)),
+                compat_urlparse.urljoin(url, 'album/%s' % album_id),
                 ie=BandcampAlbumIE.ie_key(),
                 video_id='{}-{}'.format(uploader, album_id),
                 video_title=album_id,
