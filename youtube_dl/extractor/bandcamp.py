@@ -437,9 +437,6 @@ class BandcampUserIE(InfoExtractor):
 
         album_elements = re.findall(r'<a href="/album/(.[^"]+)">', webpage)
 
-        if not album_elements:
-            raise ExtractorError('The page doesn\'t contain any albums')
-
         entries = [
             self.url_result(
                 compat_urlparse.urljoin(url, 'album/%s' % album_id),
