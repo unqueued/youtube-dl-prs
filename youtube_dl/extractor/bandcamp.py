@@ -433,7 +433,8 @@ class BandcampUserIE(InfoExtractor):
     @classmethod
     def suitable(cls, url):
         return (False
-                if BandcampAlbumIE.suitable(url)
+                if BandcampAlbumIE.suitable(url) or BandcampIE.suitable(url) or
+                BandcampWeeklyIE.suitable(url)
                 else super(BandcampUserIE, cls).suitable(url))
 
     def _real_extract(self, url):
