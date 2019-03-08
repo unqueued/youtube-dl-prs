@@ -430,6 +430,12 @@ class BandcampUserIE(InfoExtractor):
         'playlist_count': 1,
     }]
 
+    @classmethod
+    def suitable(cls, url):
+        return (False
+                if BandcampAlbumIE.suitable(url)
+                else super(BandcampUserIE, cls).suitable(url))
+
     def _real_extract(self, url):
         uploader = self._match_id(url)
 
