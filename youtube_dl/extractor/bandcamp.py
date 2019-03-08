@@ -412,7 +412,7 @@ class BandcampWeeklyIE(InfoExtractor):
 
 class BandcampUserIE(InfoExtractor):
     IE_NAME = 'Bandcamp:user'
-    _VALID_URL = r'https?://(?:(?P<subdomain>[^.]+)\.)?bandcamp\.com/?'
+    _VALID_URL = r'https?://(?:(?P<id>[^.]+)\.)?bandcamp\.com/?'
 
     _TESTS = [{
         'url': 'https://adrianvonziegler.bandcamp.com',
@@ -431,8 +431,7 @@ class BandcampUserIE(InfoExtractor):
     }]
 
     def _real_extract(self, url):
-        mobj = re.match(self._VALID_URL, url)
-        uploader = mobj.group('subdomain')
+        uploader = self._match_id(url)
 
         webpage = self._download_webpage(url, uploader)
 
