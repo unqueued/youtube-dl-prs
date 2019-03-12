@@ -1741,18 +1741,29 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
             if dash_mpd and dash_mpd not in dash_mpds:
                 dash_mpds.append(dash_mpd)
 
-        def get_storyboards(video_info):
+        def get_storyboards(video_info, video_webpage):
             storyboards = []
             
+            # Try to extract storyborads from video_info
             player_response = video_info.get('player_response', [])
             if len(player_response) > 0 and isinstance(player_response[0], compat_str):
                 player_response = self._parse_json(
                     player_response[0], video_id, fatal=False)
-                if player_response:
+                if player_response and 'storyboards' in player_response:
                     spec = [player_response['storyboards']['playerStoryboardSpecRenderer']['spec']]
-
+                else:
+                    spec = []
             else:
                 spec = video_info.get('storyboard_spec', [])
+
+            if len(spec) == 0:
+                # Try to extract storyborads from video_webpage
+                sb_index = video_webpage.find('playerStoryboardSpecRenderer')
+                if sb_index != -1:
+                    sb_spec_renderer = video_webpage[sb_index:]
+                    sb_str = sb_spec_renderer[sb_spec_renderer.find('{'):sb_spec_renderer.find('}')+1]
+                    sb_json = json.loads(sb_str.encode("utf-8").decode("unicode_escape"))
+                    spec = [sb_json['spec']]
 
             for s in spec:
                 s_parts = s.split('|')
