@@ -448,7 +448,7 @@ class BandcampUserIE(InfoExtractor):
             self.url_result(
                 compat_urlparse.urljoin(url, album_id),
                 ie=BandcampAlbumIE.ie_key(),
-                video_id='{}-{}'.format(uploader, album_id),
+                video_id='%s-%s' % (uploader, album_id),
                 video_title=album_id,
             )
             for album_id in album_elements
@@ -457,6 +457,6 @@ class BandcampUserIE(InfoExtractor):
         return {
             '_type': 'playlist',
             'id': uploader,
-            'title': 'Albums of {}'.format(uploader),
+            'title': 'Albums of %s' % (uploader),
             'entries': entries,
         }
