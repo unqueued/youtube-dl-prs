@@ -5,7 +5,6 @@ from .vimeo import VHXEmbedIE
 
 from ..utils import (
     ExtractorError,
-    sanitized_Request,
     urlencode_postdata,
 )
 
@@ -75,27 +74,22 @@ class IntlDropoutIE(VHXEmbedIE):
             'password': password
         })
 
-        request = sanitized_Request(
-            self._LOGIN_URL, urlencode_postdata(login_form))
-        request.add_header('Content-Type', 'application/x-www-form-urlencoded')
-        try:
-            self._download_webpage(request, None, 'Logging in', expected_status=302)
-        except Exception:
-            raise ExtractorError(
-                'Unable to login',
-                expected=True)
+        self._download_webpage(self._LOGIN_URL, None, 'Logging in', 'Login failed',
+                               expected_status=302,
+                               data=urlencode_postdata(login_form),
+                               headers={'Content-Type': 'application/x-www-form-urlencoded'})
 
     def _real_extract(self, url):
         webpage = self._download_webpage(url, None)
         video = self._html_search_regex(r'<iframe[^>]*"(?P<embed>https://embed.vhx.tv/videos/[0-9]+[^"]*)"[^>]*>', webpage, 'embed')
         video_id = self._search_regex(r'https://embed.vhx.tv/videos/(?P<id>[0-9]+)', video, 'id')
-        video_title = self._html_search_regex(r'<h1 class="[^"]*video-title[^"]*"[^>]*><strong>(?P<title>[^<]+)<', webpage, 'title')
+        video_title = self._html_search_regex(r'<h1 class="[^"]*video-title[^"]*"[^>]*><strong>(?P<title>[^<]+)<', webpage, 'title', fatal=False)
         return self.url_result(video, video_id=video_id, video_title=video_title)
 
 
 class IntlDropoutPlaylistIE(IntlDropoutIE):
     IE_NAME = 'intldropout:playlist'
-    _VALID_URL = r'^https://intl\.dropout\.tv/(?P<id>.+)'
+    _VALID_URL = r'https://intl\.dropout\.tv/(?P<id>.+)'
     _TESTS = [
         {
             'url': 'https://intl.dropout.tv/um-actually-the-web-series',
@@ -131,7 +125,7 @@ class IntlDropoutPlaylistIE(IntlDropoutIE):
         return False if IntlDropoutIE.suitable(url) else super(IntlDropoutPlaylistIE, cls).suitable(url)
 
     def _real_extract(self, url):
-        playlist_id = self._search_regex(r'https://intl.dropout.tv/(?P<id>.+)', url, 'id')
+        playlist_id = self._match_id(url)
         webpage = self._download_webpage(url, playlist_id)
         items = re.findall(r'browse-item-title[^>]+>[^<]*<a href="(?P<url>https://intl.dropout.tv/[^/]+/[^"]+)"', webpage)
         playlist_title = self._html_search_regex(r'<h1 class="[^"]*collection-title[^"]*"[^>]*>(?P<title>[^<]+)<', webpage, 'title')
