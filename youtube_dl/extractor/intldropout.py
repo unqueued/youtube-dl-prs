@@ -66,6 +66,9 @@ class IntlDropoutIE(VHXEmbedIE):
         if login_page is False:
             return
 
+        if "You are now signed in" in login_page:
+            return
+
         login_form = self._hidden_inputs(login_page)
 
         login_form.update({
