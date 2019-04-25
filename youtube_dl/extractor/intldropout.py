@@ -66,7 +66,7 @@ class IntlDropoutIE(VHXEmbedIE):
         if login_page is False:
             return
 
-        if "You are now signed in" in login_page:
+        if "You are now signed in." in login_page:
             return
 
         login_form = self._hidden_inputs(login_page)
@@ -84,6 +84,8 @@ class IntlDropoutIE(VHXEmbedIE):
 
     def _real_extract(self, url):
         webpage = self._download_webpage(url, None)
+        if "The device limit for your account has been reached" in webpage:
+            raise ExtractorError('Device Limit reached', expected=True)
         video = self._html_search_regex(r'<iframe[^>]*"(?P<embed>https://embed.vhx.tv/videos/[0-9]+[^"]*)"[^>]*>', webpage, 'embed')
         video_id = self._search_regex(r'https://embed.vhx.tv/videos/(?P<id>[0-9]+)', video, 'id')
         video_title = self._html_search_regex(r'<h1 class="[^"]*video-title[^"]*"[^>]*><strong>(?P<title>[^<]+)<', webpage, 'title', fatal=False)
