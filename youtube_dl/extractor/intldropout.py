@@ -52,20 +52,16 @@ class IntlDropoutIE(VHXEmbedIE):
 
     def _login(self):
         email, password = self._get_login_info()
-        if email is None or password is None:
-            if self._downloader.params.get('cookiefile') is None:
+        if (email is None or password is None) and self._downloader.params.get('cookiefile') is None:
                 raise ExtractorError('No login info available, needed for using %s.' % self.IE_NAME, expected=True)
-            return True
 
         login_page = self._download_webpage(
             self._LOGIN_URL, None,
             note='Downloading login page',
-            errnote='unable to fetch login page', fatal=False
+            errnote='unable to fetch login page'
         )
 
-        if login_page is False:
-            return
-
+        """check if user is already logged in via cookies"""
         if "You are now signed in." in login_page:
             return
 
@@ -86,6 +82,9 @@ class IntlDropoutIE(VHXEmbedIE):
         webpage = self._download_webpage(url, None)
         if "The device limit for your account has been reached" in webpage:
             raise ExtractorError('Device Limit reached', expected=True)
+        if "Start your free trial" in webpage or "Start Free Trial" in webpage or "Sign in" in webpage:
+            raise ExtractorError('You don\'t seem to be logged in', expected=True)
+
         video = self._html_search_regex(r'<iframe[^>]*"(?P<embed>https://embed.vhx.tv/videos/[0-9]+[^"]*)"[^>]*>', webpage, 'embed')
         video_id = self._search_regex(r'https://embed.vhx.tv/videos/(?P<id>[0-9]+)', video, 'id')
         video_title = self._html_search_regex(r'<h1 class="[^"]*video-title[^"]*"[^>]*><strong>(?P<title>[^<]+)<', webpage, 'title', fatal=False)
