@@ -3,10 +3,7 @@ from __future__ import unicode_literals
 
 from .vimeo import VHXEmbedIE
 
-from ..utils import (
-    ExtractorError,
-    urlencode_postdata,
-)
+from ..utils import ExtractorError
 
 import re
 
@@ -54,29 +51,7 @@ class IntlDropoutIE(VHXEmbedIE):
         email, password = self._get_login_info()
         if (email is None or password is None) and self._downloader.params.get('cookiefile') is None:
                 raise ExtractorError('No login info available, needed for using %s.' % self.IE_NAME, expected=True)
-
-        login_page = self._download_webpage(
-            self._LOGIN_URL, None,
-            note='Downloading login page',
-            errnote='unable to fetch login page'
-        )
-
-        """check if user is already logged in via cookies"""
-        if "You are now signed in." in login_page:
-            return
-
-        login_form = self._hidden_inputs(login_page)
-
-        login_form.update({
-            'passwordless': 0,
-            'email': email,
-            'password': password
-        })
-
-        self._download_webpage(self._LOGIN_URL, None, 'Logging in', 'Login failed',
-                               expected_status=302,
-                               data=urlencode_postdata(login_form),
-                               headers={'Content-Type': 'application/x-www-form-urlencoded'})
+        self._vhx_login(email, password, self._LOGIN_URL)
 
     def _real_extract(self, url):
         webpage = self._download_webpage(url, None)
