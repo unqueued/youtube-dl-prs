@@ -71,30 +71,30 @@ class IntlDropoutPlaylistIE(IntlDropoutIE):
     _VALID_URL = r'https://intl\.dropout\.tv/(?P<id>.+)'
     _TESTS = [
         {
-            'url': 'https://intl.dropout.tv/um-actually-the-web-series',
+            'url': 'https://intl.dropout.tv/um-actually',
             'md5': 'ebcd26ef54f546225e7cb96e79da31cc',
-            'playlist_count': 9,
+            'playlist_count': 30,
             'info_dict': {
-                'id': 'um-actually-the-web-series',
-                'title': 'Um, Actually: The Web Series',
+                'id': 'um-actually',
+                'title': 'Um, Actually',
             }
         },
         {
             'url': 'https://intl.dropout.tv/new-releases',
             'md5': 'ebcd26ef54f546225e7cb96e79da31cc',
-            'playlist_count': 22,
+            'playlist_count': 24,
             'info_dict': {
                 'id': 'new-releases',
                 'title': 'New Releases',
             }
         },
         {
-            'url': 'https://intl.dropout.tv/troopers/season:2',
+            'url': 'https://intl.dropout.tv/troopers-the-web-series/season:2',
             'md5': 'ebcd26ef54f546225e7cb96e79da31cc',
             'playlist_count': 10,
             'info_dict': {
-                'id': 'troopers/season:2',
-                'title': 'Troopers',
+                'id': 'troopers-the-web-series/season:2',
+                'title': 'Troopers: The Web Series',
             }
         }
     ]
@@ -106,6 +106,14 @@ class IntlDropoutPlaylistIE(IntlDropoutIE):
     def _real_extract(self, url):
         playlist_id = self._match_id(url)
         webpage = self._download_webpage(url, playlist_id)
-        items = re.findall(r'browse-item-title[^>]+>[^<]*<a href="(?P<url>https://intl.dropout.tv/[^/]+/[^"]+)"', webpage)
-        playlist_title = self._html_search_regex(r'<h1 class="[^"]*collection-title[^"]*"[^>]*>(?P<title>[^<]+)<', webpage, 'title')
+        playlist_title = self._html_search_regex(r'<h1 class="[^"]*collection-title[^"]*"[^>]*>(?P<title>[^<]+)<', webpage, 'title')    
+
+        items = []
+        while True:
+            items.extend(re.findall(r'browse-item-title[^>]+>[^<]*<a href="(?P<url>https://intl.dropout.tv/[^/]+/[^"]+)"', webpage))
+            next_page_url = self._search_regex(r'href="(/[^\?]+\?page=\d+)"', webpage, 'next page url', default=None)
+            if not next_page_url:
+                break
+            webpage = self._download_webpage('https://intl.dropout.tv' + next_page_url, playlist_id)
+
         return self.playlist_from_matches(items, playlist_id=playlist_id, playlist_title=playlist_title)
