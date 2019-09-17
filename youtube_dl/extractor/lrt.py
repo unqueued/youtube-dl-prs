@@ -1,14 +1,12 @@
 # coding: utf-8
 from __future__ import unicode_literals
 
-import re
-
 from .common import InfoExtractor
 from ..utils import (
-    determine_ext,
-    int_or_none,
-    parse_duration,
-    remove_end,
+    unified_timestamp,
+    clean_html,
+    ExtractorError,
+    try_get,
 )
 
 
@@ -17,78 +15,66 @@ class LRTIE(InfoExtractor):
     _VALID_URL = r'https?://(?:www\.)?lrt\.lt/mediateka/irasas/(?P<id>[0-9]+)'
     _TESTS = [{
         # m3u8 download
-        'url': 'http://www.lrt.lt/mediateka/irasas/54391/',
-        'md5': 'fe44cf7e4ab3198055f2c598fc175cb0',
+        'url': 'https://www.lrt.lt/mediateka/irasas/2000078895/loterija-keno-loto',
+        # md5 for first 10240 bytes of content
+        'md5': '8e6f0121ccacc17d91f98837c66853f0',
         'info_dict': {
-            'id': '54391',
+            'id': '2000078895',
             'ext': 'mp4',
-            'title': 'Septynios Kauno dienos',
-            'description': 'md5:24d84534c7dc76581e59f5689462411a',
-            'duration': 1783,
-            'view_count': int,
-            'like_count': int,
+            'title': u'Loterija \u201eKeno Loto\u201c',
+            'description': u'Tira\u017eo nr.: 7993.',
+            'timestamp': 1568658420,
+            'tags': [u'Loterija \u201eKeno Loto\u201c', u'LRT TELEVIZIJA'],
+            'upload_date': '20190916',
         },
     }, {
-        # direct mp3 download
-        'url': 'http://www.lrt.lt/mediateka/irasas/1013074524/',
-        'md5': '389da8ca3cad0f51d12bed0c844f6a0a',
+        # m4a download
+        'url': 'https://www.lrt.lt/mediateka/irasas/2000068931/vakaro-pasaka-bebriukas',
+        # md5 for first 11297 bytes of content
+        'md5': 'f02072fb3c416c1c8f5969ea7b70f53b',
         'info_dict': {
-            'id': '1013074524',
-            'ext': 'mp3',
-            'title': 'Kita tema 2016-09-05 15:05',
-            'description': 'md5:1b295a8fc7219ed0d543fc228c931fb5',
-            'duration': 3008,
-            'view_count': int,
-            'like_count': int,
+            'id': '2000068931',
+            'ext': 'm4a',
+            'title': u'Vakaro pasaka. Bebriukas',
+            'description': u'Est\u0173 pasaka \u201eBebriukas\u201d. Skaito aktorius Antanas \u0160urna.',
+            'timestamp': 1558461780,
+            'tags': [u'LRT RADIJAS', u'Vakaro pasaka', u'Bebriukas'],
+            'upload_date': '20190521',
         },
     }]
 
+    MEDIA_INFO_URL = 'https://www.lrt.lt/servisai/stream_url/vod/media_info/'
+    THUMBNAIL_URL = 'https://www.lrt.lt'
+    QUERY_URL = '/mediateka/irasas/'
+
     def _real_extract(self, url):
         video_id = self._match_id(url)
-        webpage = self._download_webpage(url, video_id)
+        media_info = self._download_json(self.MEDIA_INFO_URL, video_id, query={'url': self.QUERY_URL + video_id})
 
-        title = remove_end(self._og_search_title(webpage), ' - LRT')
+        video_id = try_get(media_info, lambda x: x.get('id'), int)
+        if not video_id:
+            raise ExtractorError("Unable to fetch media info")
 
-        formats = []
-        for _, file_url in re.findall(
-                r'file\s*:\s*(["\'])(?P<url>(?:(?!\1).)+)\1', webpage):
-            ext = determine_ext(file_url)
-            if ext not in ('m3u8', 'mp3'):
-                continue
-            # mp3 served as m3u8 produces stuttered media file
-            if ext == 'm3u8' and '.mp3' in file_url:
-                continue
-            if ext == 'm3u8':
-                formats.extend(self._extract_m3u8_formats(
-                    file_url, video_id, 'mp4', entry_protocol='m3u8_native',
-                    fatal=False))
-            elif ext == 'mp3':
-                formats.append({
-                    'url': file_url,
-                    'vcodec': 'none',
-                })
-        self._sort_formats(formats)
+        playlist_item = media_info.get('playlist_item', {})
+        file = playlist_item.get('file')
+        if not file:
+            raise ExtractorError("Media info did not contain m3u8 file url")
 
-        thumbnail = self._og_search_thumbnail(webpage)
-        description = self._og_search_description(webpage)
-        duration = parse_duration(self._search_regex(
-            r'var\s+record_len\s*=\s*(["\'])(?P<duration>[0-9]+:[0-9]+:[0-9]+)\1',
-            webpage, 'duration', default=None, group='duration'))
+        if ".m4a" in file:
+            # audio only content
+            formats = [{'url': file, 'vcodec': 'none', 'ext': 'm4a'}]
+        else:
+            formats = self._extract_m3u8_formats(file, video_id, 'mp4', entry_protocol='m3u8_native')
 
-        view_count = int_or_none(self._html_search_regex(
-            r'<div[^>]+class=(["\']).*?record-desc-seen.*?\1[^>]*>(?P<count>.+?)</div>',
-            webpage, 'view count', fatal=False, group='count'))
-        like_count = int_or_none(self._search_regex(
-            r'<span[^>]+id=(["\'])flikesCount.*?\1>(?P<count>\d+)<',
-            webpage, 'like count', fatal=False, group='count'))
+        # adjust media datetime to youtube_dl supported datetime format
+        timestamp = unified_timestamp(media_info.get('date').replace('.', '-') + '+02:00')
 
         return {
-            'id': video_id,
-            'title': title,
+            'id': str(video_id).decode('utf-8'),
+            'title': playlist_item.get('title', 'unknown title'),
             'formats': formats,
-            'thumbnail': thumbnail,
-            'description': description,
-            'duration': duration,
-            'view_count': view_count,
-            'like_count': like_count,
+            'thumbnail': self.THUMBNAIL_URL + playlist_item.get('image', '/images/default-img.svg'),
+            'description': clean_html(media_info.get('content', 'unknown description')),
+            'timestamp': timestamp,
+            'tags': [i['name'] for i in media_info.get('tags')] if media_info.get('tags') else [],
         }
