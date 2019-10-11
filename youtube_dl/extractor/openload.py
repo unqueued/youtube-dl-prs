@@ -243,12 +243,13 @@ class PhantomJSwrapper(object):
 
 
 class OpenloadIE(InfoExtractor):
-    _DOMAINS = r'''(?x)
+    _DOMAINS = r'''
                     (?:
                         openload\.(?:co|io|link|pw)|
-                        oload\.(?:tv|best|biz|stream|site|xyz|win|download|cloud|cc|icu|fun|club|info|press|pw|life|live|space|services|website|vip)|
-                        oladblock\.(?:services|xyz|me)|openloed\.co)
-                    '''
+                        oload\.(?:tv|best|biz|stream|site|xyz|win|download|cloud|cc|icu|fun|club|info|online|monster|press|pw|life|live|space|services|website|vip)|
+                        oladblock\.(?:services|xyz|me)|openloed\.co
+                    )
+                '''
     _VALID_URL = r'''(?x)
                     https?://
                         (?P<host>
@@ -362,6 +363,12 @@ class OpenloadIE(InfoExtractor):
         'url': 'https://oload.services/embed/bs1NWj1dCag/',
         'only_matching': True,
     }, {
+        'url': 'https://oload.online/f/W8o2UfN1vNY/',
+        'only_matching': True,
+    }, {
+        'url': 'https://oload.monster/f/W8o2UfN1vNY/',
+        'only_matching': True,
+    }, {
         'url': 'https://oload.press/embed/drTBl1aOTvk/',
         'only_matching': True,
     }, {
@@ -396,7 +403,7 @@ class OpenloadIE(InfoExtractor):
     @classmethod
     def _extract_urls(cls, webpage):
         return re.findall(
-            r'<iframe[^>]+src=["\']((?:https?://)?%s/%s/[a-zA-Z0-9-_]+)'
+            r'(?x)<iframe[^>]+src=["\']((?:https?://)?%s/%s/[a-zA-Z0-9-_]+)'
             % (cls._DOMAINS, cls._EMBED_WORD), webpage)
 
     def _extract_decrypted_page(self, page_url, webpage, video_id):
@@ -462,7 +469,7 @@ class OpenloadIE(InfoExtractor):
 class VerystreamIE(OpenloadIE):
     IE_NAME = 'verystream'
 
-    _DOMAINS = r'(?:verystream\.com)'
+    _DOMAINS = r'(?:verystream\.com|woof\.tube)'
     _VALID_URL = r'''(?x)
                     https?://
                         (?P<host>

@@ -77,7 +77,6 @@ from .instagram import InstagramIE
 from .liveleak import LiveLeakIE
 from .threeqsdn import ThreeQSDNIE
 from .theplatform import ThePlatformIE
-from .vessel import VesselIE
 from .kaltura import KalturaIE
 from .eagleplatform import EaglePlatformIE
 from .facebook import FacebookIE
@@ -2076,6 +2075,22 @@ class GenericIE(InfoExtractor):
             'playlist_count': 6,
         },
         {
+            # Squarespace video embed, 2019-08-28
+            'url': 'http://ootboxford.com',
+            'info_dict': {
+                'id': 'Tc7b_JGdZfw',
+                'title': 'Out of the Blue, at Childish Things 10',
+                'ext': 'mp4',
+                'description': 'md5:a83d0026666cf5ee970f8bd1cfd69c7f',
+                'uploader_id': 'helendouglashouse',
+                'uploader': 'Helen & Douglas House',
+                'upload_date': '20140328',
+            },
+            'params': {
+                'skip_download': True,
+            },
+        },
+        {
             # Zype embed
             'url': 'https://www.cookscountry.com/episode/554-smoky-barbecue-favorites',
             'info_dict': {
@@ -2395,6 +2410,12 @@ class GenericIE(InfoExtractor):
         # Unescaping the whole page allows to handle those cases in a generic way
         webpage = compat_urllib_parse_unquote(webpage)
 
+        # Unescape squarespace embeds to be detected by generic extractor,
+        # see https://github.com/ytdl-org/youtube-dl/issues/21294
+        webpage = re.sub(
+            r'<div[^>]+class=[^>]*?\bsqs-video-wrapper\b[^>]*>',
+            lambda x: unescapeHTML(x.group(0)), webpage)
+
         # it's tempting to parse this further, but you would
         # have to take into account all the variations like
         #   Video Title - Site Name
@@ -2468,11 +2489,6 @@ class GenericIE(InfoExtractor):
         tp_urls = ThePlatformIE._extract_urls(webpage)
         if tp_urls:
             return self.playlist_from_matches(tp_urls, video_id, video_title, ie='ThePlatform')
-
-        # Look for Vessel embeds
-        vessel_urls = VesselIE._extract_urls(webpage)
-        if vessel_urls:
-            return self.playlist_from_matches(vessel_urls, video_id, video_title, ie=VesselIE.ie_key())
 
         # Look for embedded rtl.nl player
         matches = re.findall(
