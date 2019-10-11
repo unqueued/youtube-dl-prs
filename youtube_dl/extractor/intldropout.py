@@ -62,7 +62,7 @@ class IntlDropoutIE(VHXEmbedIE):
 
         video = self._html_search_regex(r'<iframe[^>]*"(?P<embed>https://embed.vhx.tv/videos/[0-9]+[^"]*)"[^>]*>', webpage, 'embed')
         video_id = self._search_regex(r'https://embed.vhx.tv/videos/(?P<id>[0-9]+)', video, 'id')
-        video_title = self._html_search_regex(r'<h1 class="[^"]*video-title[^"]*"[^>]*><strong>(?P<title>[^<]+)<', webpage, 'title', fatal=False)
+        video_title = self._html_search_regex(r'<h1 class="[^"]*video-title[^"]*"[^>]*>\s*<strong>(?P<title>[^<]+)<', webpage, 'title', fatal=False)
         return self.url_result(video, video_id=video_id, video_title=video_title)
 
 
