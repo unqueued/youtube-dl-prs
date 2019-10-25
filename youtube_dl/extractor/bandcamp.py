@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import json
 import random
 import re
 import time
@@ -15,6 +16,7 @@ from ..utils import (
     int_or_none,
     KNOWN_EXTENSIONS,
     parse_filesize,
+    RegexNotFoundError,
     str_or_none,
     try_get,
     unescapeHTML,
@@ -22,7 +24,6 @@ from ..utils import (
     unified_strdate,
     unified_timestamp,
     url_or_none,
-    RegexNotFoundError,
 )
 
 
@@ -337,7 +338,6 @@ class BandcampWeeklyIE(InfoExtractor):
             'series': 'Bandcamp Weekly',
             'episode': 'Magic Moments',
             'episode_number': 208,
-            'episode_id': '224',
         }
     }, {
         'url': 'https://bandcamp.com/?blah/blah@&show=228',
@@ -405,36 +405,44 @@ class BandcampWeeklyIE(InfoExtractor):
             'series': 'Bandcamp Weekly',
             'episode': show.get('subtitle'),
             'episode_number': episode_number,
-            'episode_id': compat_str(video_id),
             'formats': formats
         }
 
 
 class BandcampUserIE(InfoExtractor):
     IE_NAME = 'Bandcamp:user'
-    _VALID_URL = r'https?://(?:(?P<id>[^.]+)\.)?bandcamp\.com/?'
+    _VALID_URL = r'https?://(?:(?P<id>[^.]+)\.)?bandcamp\.com'
 
     _TESTS = [{
         'url': 'https://adrianvonziegler.bandcamp.com',
         'info_dict': {
             'id': 'adrianvonziegler',
-            'title': 'Albums of adrianvonziegler',
+            'title': 'Discography of adrianvonziegler',
         },
-        'playlist_mincount': 20,
+        'playlist_mincount': 22,
     }, {
         'url': 'http://dotscale.bandcamp.com',
         'info_dict': {
             'id': 'dotscale',
-            'title': 'Albums of dotscale',
+            'title': 'Discography of dotscale',
         },
         'playlist_count': 1,
-    }]
+    }, {
+        'url': 'https://nightcallofficial.bandcamp.com',
+        'info_dict': {
+            'id': 'nightcallofficial',
+            'title': 'Discography of nightcallofficial',
+        },
+        'playlist_count': 4,
+
+    },
+    ]
 
     @classmethod
     def suitable(cls, url):
-        return (False
-                if BandcampAlbumIE.suitable(url) or BandcampIE.suitable(url) or
-                BandcampWeeklyIE.suitable(url)
+        return (False if BandcampAlbumIE.suitable(url)
+                or BandcampIE.suitable(url)
+                or BandcampWeeklyIE.suitable(url)
                 else super(BandcampUserIE, cls).suitable(url))
 
     def _real_extract(self, url):
@@ -442,21 +450,38 @@ class BandcampUserIE(InfoExtractor):
 
         webpage = self._download_webpage(url, uploader)
 
-        album_elements = re.findall(r'<a href="/(album/.[^"]+)">', webpage)
+        # Bandcamp User type 1 page
+        try:
+            discography_data = json.loads(self._search_regex(
+                r'data-edit-callback="/music_reorder" data-initial-values="([^"]+)">',
+                webpage, 'raw_data').replace('&quot;', '"'))
 
-        entries = [
-            self.url_result(
-                compat_urlparse.urljoin(url, album_id),
-                ie=BandcampAlbumIE.ie_key(),
-                video_id='%s-%s' % (uploader, album_id),
-                video_title=album_id,
-            )
-            for album_id in album_elements
-        ]
+            entries = [
+                self.url_result(
+                    compat_urlparse.urljoin(url, element['page_url']),
+                    ie=BandcampAlbumIE.ie_key(),
+                    video_id=element['id'],
+                    video_title=element['title'],
+                )
+                for element in discography_data
+            ]
+        except RegexNotFoundError:
+            # Bandcamp user type 2 page
+            discography_data = re.findall(
+                r'<div[^>]+trackTitle["\'][^"\']+["\']([^"\']+)', webpage)
+
+            entries = [
+                self.url_result(
+                    compat_urlparse.urljoin(url, element),
+                    ie=BandcampAlbumIE.ie_key(),
+                    video_title=element,
+                )
+                for element in discography_data
+            ]
 
         return {
             '_type': 'playlist',
             'id': uploader,
-            'title': 'Albums of %s' % (uploader),
+            'title': 'Discography of %s' % uploader,
             'entries': entries,
         }
