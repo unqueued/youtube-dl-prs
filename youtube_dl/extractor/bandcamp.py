@@ -465,7 +465,7 @@ class BandcampUserIE(InfoExtractor):
                 entries.append(self.url_result(
                     compat_urlparse.urljoin(url, element['page_url']),
                     ie=ie,
-                    video_id=element['id'],
+                    video_id=str(element['id']),
                     video_title=element['title']))
         except RegexNotFoundError:
             # Bandcamp user type 2 page
@@ -482,6 +482,7 @@ class BandcampUserIE(InfoExtractor):
                     compat_urlparse.urljoin(url, element),
                     ie=ie,
                     video_title=element))
+
         return {
             '_type': 'playlist',
             'id': uploader,
