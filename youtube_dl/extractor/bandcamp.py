@@ -473,7 +473,7 @@ class BandcampUserIE(InfoExtractor):
                 r'<div[^>]+trackTitle["\'][^"\']+["\']([^"\']+)', webpage)
 
             for element in discography_data:
-                if re.match('album', element):
+                if re.match('/album/+', element):
                     ie = BandcampAlbumIE.ie_key()
                 else:
                     ie = BandcampIE.ie_key()
