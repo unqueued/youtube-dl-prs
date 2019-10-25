@@ -447,8 +447,8 @@ class BandcampUserIE(InfoExtractor):
 
     def _real_extract(self, url):
         uploader = self._match_id(url)
-
         webpage = self._download_webpage(url, uploader)
+        entries = []
 
         # Bandcamp User type 1 page
         try:
@@ -456,29 +456,32 @@ class BandcampUserIE(InfoExtractor):
                 r'data-edit-callback="/music_reorder" data-initial-values="([^"]+)">',
                 webpage, 'raw_data').replace('&quot;', '"'))
 
-            entries = [
-                self.url_result(
+            for element in discography_data:
+                if element['type'] == 'album':
+                    ie = BandcampAlbumIE.ie_key()
+                else:
+                    ie = BandcampIE.ie_key()
+
+                entries.append(self.url_result(
                     compat_urlparse.urljoin(url, element['page_url']),
-                    ie=BandcampAlbumIE.ie_key(),
+                    ie=ie,
                     video_id=element['id'],
-                    video_title=element['title'],
-                )
-                for element in discography_data
-            ]
+                    video_title=element['title']))
         except RegexNotFoundError:
             # Bandcamp user type 2 page
             discography_data = re.findall(
                 r'<div[^>]+trackTitle["\'][^"\']+["\']([^"\']+)', webpage)
 
-            entries = [
-                self.url_result(
-                    compat_urlparse.urljoin(url, element),
-                    ie=BandcampAlbumIE.ie_key(),
-                    video_title=element,
-                )
-                for element in discography_data
-            ]
+            for element in discography_data:
+                if re.match('album', element):
+                    ie = BandcampAlbumIE.ie_key()
+                else:
+                    ie = BandcampIE.ie_key()
 
+                entries.append(self.url_result(
+                    compat_urlparse.urljoin(url, element),
+                    ie=ie,
+                    video_title=element))
         return {
             '_type': 'playlist',
             'id': uploader,
