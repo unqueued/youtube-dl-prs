@@ -22,6 +22,7 @@ from ..utils import (
     unified_strdate,
     unified_timestamp,
     url_or_none,
+    RegexNotFoundError,
 )
 
 
@@ -414,4 +415,53 @@ class BandcampWeeklyIE(InfoExtractor):
             'episode_number': episode_number,
             'episode_id': compat_str(video_id),
             'formats': formats
+        }
+
+
+class BandcampUserIE(InfoExtractor):
+    IE_NAME = 'Bandcamp:user'
+    _VALID_URL = r'https?://(?:(?P<subdomain>[^.]+)\.)?bandcamp\.com'
+
+    _TESTS = [{
+        'url': 'https://adrianvonziegler.bandcamp.com',
+        'info_dict': {
+            'id': 'adrianvonziegler',
+            'title': 'Albums of adrianvonziegler',
+        },
+        'playlist_mincount': 20,
+    }, {
+        'url': 'http://dotscale.bandcamp.com',
+        'info_dict': {
+            'id': 'dotscale',
+            'title': 'Albums of dotscale',
+        },
+        'playlist_count': 1,
+    }]
+
+    def _real_extract(self, url):
+        mobj = re.match(self._VALID_URL, url)
+        uploader = mobj.group('subdomain')
+
+        webpage = self._download_webpage(url, uploader)
+
+        album_elements = re.findall(r'<a href="/album/(.+)">', webpage)
+
+        if not album_elements:
+            raise ExtractorError('The page doesn\'t contain any albums')
+
+        entries = [
+            self.url_result(
+                compat_urlparse.urljoin(url, 'album/{}'.format(album_id)),
+                ie=BandcampAlbumIE.ie_key(),
+                video_id='{}-{}'.format(uploader, album_id),
+                video_title=album_id,
+            )
+            for album_id in album_elements
+        ]
+
+        return {
+            '_type': 'playlist',
+            'id': uploader,
+            'title': 'Albums of {}'.format(uploader),
+            'entries': entries,
         }
