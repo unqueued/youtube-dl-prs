@@ -12,12 +12,12 @@ class IntlDropoutIE(VHXEmbedIE):
     IE_NAME = 'intldropout'
     IE_DESC = 'International Dropout.tv'
     _NETRC_MACHINE = 'intldropouttv'
-    _LOGIN_URL = 'https://intl.dropout.tv/login'
-    _LOGOUT_URL = 'https://intl.dropout.tv/logout'
-    _VALID_URL = r'https://intl\.dropout\.tv/(?:[^/]+/season:[^/]+/)?videos/(?P<id>.+)'
+    _LOGIN_URL = 'https://www.dropout.tv/login'
+    _LOGOUT_URL = 'https://www.dropout.tv/logout'
+    _VALID_URL = r'https://www\.dropout\.tv/(?:[^/]+/season:[^/]+/)?videos/(?P<id>.+)'
     _TESTS = [
         {
-            'url': 'https://intl.dropout.tv/um-actually/season:1/videos/c-3po-s-origins-hp-lovecraft-the-food-album-with-weird-al-yankovic',
+            'url': 'https://www.dropout.tv/um-actually/season:1/videos/c-3po-s-origins-hp-lovecraft-the-food-album-with-weird-al-yankovic',
             'md5': '8beaac579b6ba762f63cd452fd28dcce',
             'info_dict': {
                 'id': '397785',
@@ -30,7 +30,7 @@ class IntlDropoutIE(VHXEmbedIE):
             }
         },
         {
-            'url': 'https://intl.dropout.tv/videos/um-actually-behind-the-scenes',
+            'url': 'https://www.dropout.tv/videos/um-actually-behind-the-scenes',
             'md5': 'b974927cd563423fe50945dbfdbb894c',
             'info_dict': {
                 'id': '397943',
@@ -68,10 +68,10 @@ class IntlDropoutIE(VHXEmbedIE):
 
 class IntlDropoutPlaylistIE(IntlDropoutIE):
     IE_NAME = 'intldropout:playlist'
-    _VALID_URL = r'https://intl\.dropout\.tv/(?P<id>.+)'
+    _VALID_URL = r'https://www\.dropout\.tv/(?P<id>.+)'
     _TESTS = [
         {
-            'url': 'https://intl.dropout.tv/um-actually',
+            'url': 'https://www.dropout.tv/um-actually',
             'md5': 'ebcd26ef54f546225e7cb96e79da31cc',
             'playlist_count': 30,
             'info_dict': {
@@ -80,7 +80,7 @@ class IntlDropoutPlaylistIE(IntlDropoutIE):
             }
         },
         {
-            'url': 'https://intl.dropout.tv/new-releases',
+            'url': 'https://www.dropout.tv/new-releases',
             'md5': 'ebcd26ef54f546225e7cb96e79da31cc',
             'playlist_count': 31,
             'info_dict': {
@@ -89,7 +89,7 @@ class IntlDropoutPlaylistIE(IntlDropoutIE):
             }
         },
         {
-            'url': 'https://intl.dropout.tv/troopers-the-web-series/season:2',
+            'url': 'https://www.dropout.tv/troopers-the-web-series/season:2',
             'md5': 'ebcd26ef54f546225e7cb96e79da31cc',
             'playlist_count': 10,
             'info_dict': {
@@ -110,10 +110,10 @@ class IntlDropoutPlaylistIE(IntlDropoutIE):
 
         items = []
         while True:
-            items.extend(re.findall(r'browse-item-title[^>]+>[^<]*<a href="(?P<url>https://intl.dropout.tv/[^/]+/[^"]+)"', webpage))
+            items.extend(re.findall(r'browse-item-title[^>]+>[^<]*<a href="(?P<url>https://www.dropout.tv/[^/]+/[^"]+)"', webpage))
             next_page_url = self._search_regex(r'href="(/[^\?]+\?page=\d+)"', webpage, 'next page url', default=None)
             if not next_page_url:
                 break
-            webpage = self._download_webpage('https://intl.dropout.tv' + next_page_url, playlist_id)
+            webpage = self._download_webpage('https://www.dropout.tv' + next_page_url, playlist_id)
 
         return self.playlist_from_matches(items, playlist_id=playlist_id, playlist_title=playlist_title)
