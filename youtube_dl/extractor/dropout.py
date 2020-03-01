@@ -14,7 +14,7 @@ class DropoutIE(VHXEmbedIE):
     _NETRC_MACHINE = 'dropouttv'
     _LOGIN_URL = 'https://www.dropout.tv/login'
     _LOGOUT_URL = 'https://www.dropout.tv/logout'
-    _VALID_URL = r'https://www\.dropout\.tv/(?:[^/]+/(?:season:[^/]/))?videos/(?P<id>.+)'
+    _VALID_URL = r'https://www\.dropout\.tv/(?:[^/]+/(?:season:[^/]/)?)?videos/(?P<id>.+)'
     _TESTS = [
         {
             'url': 'https://www.dropout.tv/dimension-20-tiny-heist/season:1/videos/big-little-crimes',
