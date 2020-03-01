@@ -8,38 +8,36 @@ from ..utils import ExtractorError
 import re
 
 
-class IntlDropoutIE(VHXEmbedIE):
-    IE_NAME = 'intldropout'
-    IE_DESC = 'International Dropout.tv'
-    _NETRC_MACHINE = 'intldropouttv'
+class DropoutIE(VHXEmbedIE):
+    IE_NAME = 'dropout'
+    IE_DESC = 'Dropout.tv'
+    _NETRC_MACHINE = 'dropouttv'
     _LOGIN_URL = 'https://www.dropout.tv/login'
     _LOGOUT_URL = 'https://www.dropout.tv/logout'
-    _VALID_URL = r'https://www\.dropout\.tv/(?:[^/]+/season:[^/]+/)?videos/(?P<id>.+)'
+    _VALID_URL = r'https://www\.dropout\.tv/(?:[^/]+/(?:season:[^/]/))?videos/(?P<id>.+)'
     _TESTS = [
         {
-            'url': 'https://www.dropout.tv/um-actually/season:1/videos/c-3po-s-origins-hp-lovecraft-the-food-album-with-weird-al-yankovic',
-            'md5': '8beaac579b6ba762f63cd452fd28dcce',
+            'url': 'https://www.dropout.tv/dimension-20-tiny-heist/season:1/videos/big-little-crimes',
+            'md5': '46edf4c6d632e2771a42a235f920b8f7',
             'info_dict': {
-                'id': '397785',
+                'id': '382486557',
                 'ext': 'mp4',
-                'title': "C-3PO's Origins, HP Lovecraft, the Food Album (with Weird Al Yankovic)",
-                'thumbnail': r're:^https://vhx.imgix.net/.*\.jpg$',
-                'description': 'Caldwell Tanner, Siobhan Thompson, and Nate Dern inspect guns and review the Diagon Alley bar scene.',
-                'upload_date': '20181206',
-                'timestamp': 1544117975,
+                'uploader': 'OTT Videos',
+                'uploader_id': 'user80538407',
+                'title': "Untitled",
+                'thumbnail': r're:^https://i.vimeocdn.com/.*\.jpg$',
             }
         },
         {
             'url': 'https://www.dropout.tv/videos/um-actually-behind-the-scenes',
-            'md5': 'b974927cd563423fe50945dbfdbb894c',
+            'md5': '7fd342c652a86b996bae2920695593af',
             'info_dict': {
-                'id': '397943',
+                'id': '265656116',
                 'ext': 'mp4',
+                'uploader': 'OTT Videos',
+                'uploader_id': 'user80538407',
                 'title': 'Um, Actually: Behind the Scenes',
-                'thumbnail': r're:^https://vhx.imgix.net/.*\.jpg$',
-                'description': 'What does it take to stump the nerdy? Mike Trapp and team pull back the curtain.',
-                'upload_date': '20181206',
-                'timestamp': 1544118409,
+                'thumbnail': r're:^https://i.vimeocdn.com/.*\.jpg$',
             }
         }
     ]
@@ -66,14 +64,14 @@ class IntlDropoutIE(VHXEmbedIE):
         return self.url_result(video, video_id=video_id, video_title=video_title)
 
 
-class IntlDropoutPlaylistIE(IntlDropoutIE):
-    IE_NAME = 'intldropout:playlist'
+class DropoutPlaylistIE(DropoutIE):
+    IE_NAME = 'dropout:playlist'
     _VALID_URL = r'https://www\.dropout\.tv/(?P<id>.+)'
     _TESTS = [
         {
             'url': 'https://www.dropout.tv/um-actually',
             'md5': 'ebcd26ef54f546225e7cb96e79da31cc',
-            'playlist_count': 30,
+            'playlist_count': 33,
             'info_dict': {
                 'id': 'um-actually',
                 'title': 'Um, Actually',
@@ -82,7 +80,7 @@ class IntlDropoutPlaylistIE(IntlDropoutIE):
         {
             'url': 'https://www.dropout.tv/new-releases',
             'md5': 'ebcd26ef54f546225e7cb96e79da31cc',
-            'playlist_count': 31,
+            'playlist_count': 15,
             'info_dict': {
                 'id': 'new-releases',
                 'title': 'New Releases',
@@ -101,7 +99,7 @@ class IntlDropoutPlaylistIE(IntlDropoutIE):
 
     @classmethod
     def suitable(cls, url):
-        return False if IntlDropoutIE.suitable(url) else super(IntlDropoutPlaylistIE, cls).suitable(url)
+        return False if DropoutIE.suitable(url) else super(DropoutPlaylistIE, cls).suitable(url)
 
     def _real_extract(self, url):
         playlist_id = self._match_id(url)

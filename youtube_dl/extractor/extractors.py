@@ -293,9 +293,9 @@ from .discoveryvr import DiscoveryVRIE
 from .disney import DisneyIE
 from .dispeak import DigitallySpeakingIE
 from .dropbox import DropboxIE
-from .intldropout import (
-    IntlDropoutIE,
-    IntlDropoutPlaylistIE,
+from .dropout import (
+    DropoutIE,
+    DropoutPlaylistIE,
 )
 from .dw import (
     DWIE,
