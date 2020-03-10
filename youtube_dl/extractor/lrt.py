@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from .common import InfoExtractor
+from ..compat import compat_str
 from ..utils import (
     unified_timestamp,
     clean_html,
@@ -17,7 +18,7 @@ class LRTIE(InfoExtractor):
         # m3u8 download
         'url': 'https://www.lrt.lt/mediateka/irasas/2000078895/loterija-keno-loto',
         # md5 for first 10240 bytes of content
-        'md5': '8e6f0121ccacc17d91f98837c66853f0',
+        'md5': '484f5f30e3382a1aa444debc9e6256ae',
         'info_dict': {
             'id': '2000078895',
             'ext': 'mp4',
@@ -46,35 +47,31 @@ class LRTIE(InfoExtractor):
     MEDIA_INFO_URL = 'https://www.lrt.lt/servisai/stream_url/vod/media_info/'
     THUMBNAIL_URL = 'https://www.lrt.lt'
     QUERY_URL = '/mediateka/irasas/'
+    TIMEZONE = '+02:00'
 
     def _real_extract(self, url):
-        video_id = self._match_id(url)
-        media_info = self._download_json(self.MEDIA_INFO_URL, video_id, query={'url': self.QUERY_URL + video_id})
-
-        video_id = try_get(media_info, lambda x: x.get('id'), int)
-        if not video_id:
-            raise ExtractorError("Unable to fetch media info")
-
-        playlist_item = media_info.get('playlist_item', {})
-        file = playlist_item.get('file')
+        id = self._match_id(url)
+        media_info = self._download_json(self.MEDIA_INFO_URL, id, query={'url': self.QUERY_URL + id})
+        playlist_item = try_get(media_info, lambda x: x['playlist_item'], dict)
+        file = playlist_item['file']  # mandatory for lrt.lt extractor
         if not file:
-            raise ExtractorError("Media info did not contain m3u8 file url")
+            raise ExtractorError("Media info from server did not contain m3u8 file url")
 
         if ".m4a" in file:
             # audio only content
             formats = [{'url': file, 'vcodec': 'none', 'ext': 'm4a'}]
         else:
-            formats = self._extract_m3u8_formats(file, video_id, 'mp4', entry_protocol='m3u8_native')
+            formats = self._extract_m3u8_formats(file, id, 'mp4', entry_protocol='m3u8_native')
 
-        # adjust media datetime to youtube_dl supported datetime format
-        timestamp = unified_timestamp(media_info.get('date').replace('.', '-') + '+02:00')
+        # extracting timestamp variable for clarity
+        timestamp = media_info.get('date', '').replace('.', '-') + self.TIMEZONE
 
         return {
-            'id': str(video_id).decode('utf-8'),
-            'title': playlist_item.get('title', 'unknown title'),
+            'id': id,
+            'title': playlist_item.get('title') or id,
             'formats': formats,
             'thumbnail': self.THUMBNAIL_URL + playlist_item.get('image', '/images/default-img.svg'),
-            'description': clean_html(media_info.get('content', 'unknown description')),
-            'timestamp': timestamp,
-            'tags': [i['name'] for i in media_info.get('tags')] if media_info.get('tags') else [],
+            'description': clean_html(try_get(media_info, lambda x: x['content'], compat_str)),
+            'timestamp': unified_timestamp(timestamp) if timestamp != self.TIMEZONE else None,
+            'tags': [i.get('name') for i in media_info.get('tags', [{}]) if i.get('name')],
         }
