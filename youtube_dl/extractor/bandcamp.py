@@ -419,7 +419,7 @@ class BandcampUserIE(InfoExtractor):
             'id': 'adrianvonziegler',
             'title': 'Discography of adrianvonziegler',
         },
-        'playlist_mincount': 22,
+        'playlist_mincount': 23,
     }, {
         'url': 'http://dotscale.bandcamp.com',
         'info_dict': {
@@ -451,23 +451,25 @@ class BandcampUserIE(InfoExtractor):
         entries = []
 
         # Bandcamp User type 1 page
-        try:
-            discography_data = json.loads(self._search_regex(
-                r'data-edit-callback="/music_reorder" data-initial-values="([^"]+)">',
-                webpage, 'raw_data').replace('&quot;', '"'))
+        discography_data = re.findall(
+            r'<li data-item-id="([^"]+)[^>]+>\s*<a href="(/[^/]+/[^/"]+)">',
+            webpage, re.MULTILINE)
 
-            for element in discography_data:
-                if element['type'] == 'album':
+        if len(discography_data) > 0:
+            for match in discography_data:
+                element_id = match[0]
+                element_url = match[1]
+                if element_url.split('/')[1] == 'album':
                     ie = BandcampAlbumIE.ie_key()
                 else:
                     ie = BandcampIE.ie_key()
 
                 entries.append(self.url_result(
-                    compat_urlparse.urljoin(url, element['page_url']),
+                    compat_urlparse.urljoin(url, element_url),
                     ie=ie,
-                    video_id=str(element['id']),
-                    video_title=element['title']))
-        except RegexNotFoundError:
+                    video_id=element_id,
+                    video_title=element_url.split('/')[2]))
+        else:
             # Bandcamp user type 2 page
             discography_data = re.findall(
                 r'<div[^>]+trackTitle["\'][^"\']+["\']([^"\']+)', webpage)
