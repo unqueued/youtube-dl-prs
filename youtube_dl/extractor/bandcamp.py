@@ -403,8 +403,8 @@ class BandcampWeeklyIE(InfoExtractor):
             'release_date': unified_strdate(show.get('published_date')),
             'series': 'Bandcamp Weekly',
             'episode': show.get('subtitle'),
-            'episode_id': compat_str(video_id),
             'episode_number': episode_number,
+            'episode_id': compat_str(video_id),
             'formats': formats
         }
 
