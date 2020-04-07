@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 
-import json
 import random
 import re
 import time
@@ -16,7 +15,6 @@ from ..utils import (
     int_or_none,
     KNOWN_EXTENSIONS,
     parse_filesize,
-    RegexNotFoundError,
     str_or_none,
     try_get,
     unescapeHTML,
@@ -40,7 +38,7 @@ class BandcampIE(InfoExtractor):
         },
         '_skip': 'There is a limit of 200 free downloads / month for the test song'
     }, {
-        # free  download
+        # free download
         'url': 'http://benprunty.bandcamp.com/track/lanius-battle',
         'md5': '853e35bf34aa1d6fe2615ae612564b36',
         'info_dict': {
@@ -338,6 +336,7 @@ class BandcampWeeklyIE(InfoExtractor):
             'series': 'Bandcamp Weekly',
             'episode': 'Magic Moments',
             'episode_number': 208,
+            'episode_id': '224',
         }
     }, {
         'url': 'https://bandcamp.com/?blah/blah@&show=228',
@@ -404,6 +403,7 @@ class BandcampWeeklyIE(InfoExtractor):
             'release_date': unified_strdate(show.get('published_date')),
             'series': 'Bandcamp Weekly',
             'episode': show.get('subtitle'),
+            'episode_id': compat_str(video_id),
             'episode_number': episode_number,
             'formats': formats
         }
