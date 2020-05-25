@@ -121,7 +121,6 @@ class BandcampIE(InfoExtractor):
                 r'\b%s\s*["\']?\s*:\s*(["\'])(?P<value>.+)\1' % key,
                 webpage, key, default=None, group='value')
 
-        import pdb; pdb.set_trace()  # XXX BREAKPOINT
         artist = extract('artist')
 
         album = extract('album_title')
