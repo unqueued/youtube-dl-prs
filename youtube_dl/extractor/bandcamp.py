@@ -115,12 +115,14 @@ class BandcampIE(InfoExtractor):
             track_number = int_or_none(track_info.get('track_num'))
             duration = float_or_none(track_info.get('duration'))
 
+        #        r'\b%s\s*["\']?\s*:\s*(["\'])(?P<value>(?:(?!\1).)+)\1' % key,
         def extract(key):
             return self._search_regex(
-                r'\b%s\s*["\']?\s*:\s*(["\'])(?P<value>(?:(?!\1).)+)\1' % key,
+                r'\b%s\s*["\']?\s*:\s*(["\'])(?P<value>.+)\1' % key,
                 webpage, key, default=None, group='value')
 
         artist = extract('artist')
+
         album = extract('album_title')
         timestamp = unified_timestamp(
             extract('publish_date') or extract('album_publish_date'))
