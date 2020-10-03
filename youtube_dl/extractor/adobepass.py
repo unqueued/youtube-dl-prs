@@ -60,6 +60,11 @@ MSO_INFO = {
         'username_field': 'IDToken1',
         'password_field': 'IDToken2',
     },
+    'Spectrum': {
+        'name': 'Spectrum',
+        'username_field': 'IDToken1',
+        'password_field': 'IDToken2',
+    },
     'Verizon': {
         'name': 'Verizon FiOS',
         'username_field': 'IDToken1',
